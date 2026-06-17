@@ -3,222 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Summer Registration Portal</title>
+    <title>Student Enrollment Gateway</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="navbar">
-        <h2>Medical College Summer Portal</h2>
+        <h2>Summer Course Registration Portal</h2>
         <div>
-            <span id="displayEmail" style="margin-right:20px; font-weight:bold;"></span>
-            <button class="btn btn-danger" onclick="logout()">Logout</button>
+            <span id="displayStudentName" style="margin-right:20px; font-weight:600;"></span>
+            <button class="btn btn-danger" style="padding: 6px 14px;" onclick="logout()">Disconnect</button>
         </div>
     </div>
 
     <div class="container">
-        <div class="tracker-wrapper" id="statusTracker">
-            <div class="tracker-step" id="step-Draft">Draft</div>
-            <div class="tracker-step" id="step-Submitted">Submitted</div>
-            <div class="tracker-step" id="step-Approved">Academic Approved</div>
-            <div class="tracker-step" id="step-PendingPayment">Pending Payment</div>
-            <div class="tracker-step" id="step-Registered">Registered Successfully</div>
+        <!-- Visual Progress Tracker Panel -->
+        <div class="tracker-wrapper" id="trackerComponent">
+            <div class="tracker-step" id="st-Draft">● Draft Selection</div>
+            <div class="tracker-step" id="st-Submitted">● Sent to Advisor</div>
+            <div class="tracker-step" id="st-Approved">● Layout Approved</div>
+            <div class="tracker-step" id="st-PendingPayment">● Financial Pending</div>
+            <div class="tracker-step" id="st-Registered">● Registration Confirmed ✓</div>
         </div>
 
         <div class="dashboard-grid">
             <div class="card">
-                <h3>Student Profile</h3>
-                <p><strong>ID:</strong> <span id="sId">---</span></p>
-                <p><strong>Name:</strong> <span id="sName">---</span></p>
-                <p><strong>Level:</strong> <span id="sLevel">---</span></p>
-                <p><strong>Academic Advisor:</strong> <span id="sSup">---</span></p>
+                <h3>Student Profile Architecture</h3>
+                <p><strong>System Identification ID:</strong> <span id="lblId">---</span></p>
+                <p><strong>Full Name:</strong> <span id="lblName">---</span></p>
+                <p><strong>Academic Seniority Level:</strong> <span id="lblLevel">---</span></p>
+                <p><strong>Assigned Advisor:</strong> <span id="lblSup">---</span></p>
             </div>
             <div class="card success">
-                <h3>Registration Overview</h3>
-                <p><strong>Application Status:</strong> <span id="reqStatus" style="font-weight: bold; color: #0056b3;">Draft</span></p>
-                <p><strong>Total Selected Credits:</strong> <span id="totalCredits">0</span> / 10 CH</p>
-                <p><strong>Estimated Financial Fees:</strong> <span id="totalFees">0</span> EGP</p>
+                <h3>Live Billing & Credit Matrix</h3>
+                <p><strong>Application Phase:</strong> <span id="lblStatus" style="font-weight:bold; color:var(--primary-color);">---</span></p>
+                <p><strong>Calculated Workload:</strong> <span id="lblCredits">0</span> / 10 Max CH</p>
+                <p><strong>Aggregated Invoiced Fees:</strong> <span id="lblFees">0</span> EGP</p>
             </div>
         </div>
 
-        <div id="supervisorCommentsContainer" class="card danger" style="display:none; margin-bottom: 20px;">
-            <h4>Supervisor Return Comments:</h4>
-            <p id="supComments"></p>
+        <div id="advisorFeedbackBox" class="card danger" style="display:none; margin-bottom: 25px;">
+            <h3>Academic Advisory Feedback & Constraints</h3>
+            <p id="txtFeedback" style="color:var(--dark-neutral); font-weight:500;"></p>
         </div>
 
-        <h3>Available Summer Courses</h3>
-        <table id="coursesTable">
+        <h3>Available Summer Program Curriculum Matrix</h3>
+        <table id="catalogTable">
             <thead>
                 <tr>
-                    <th>Select</th>
+                    <th>Selection Trigger</th>
                     <th>Course Code</th>
-                    <th>Course Name</th>
-                    <th>Credit Hours</th>
-                    <th>Available Seats</th>
-                    <th>Fee Per Credit</th>
+                    <th>Course Subject Name</th>
+                    <th>Weight Structure</th>
+                    <th>Live Seat Availability</th>
+                    <th>Unit Cost</th>
                 </tr>
             </thead>
-            <tbody>
-                </tbody>
+            <tbody></tbody>
         </table>
         
-        <div style="margin-top:20px; text-align:right;">
-            <button id="submitBtn" class="btn btn-success" onclick="processFinalSubmission()">Finalize & Submit Request</button>
+        <div style="margin-top:30px; text-align:right;">
+            <button id="commitActionBtn" class="btn btn-success" onclick="executeFinalFormSubmission()">Lock Layout & Final Submit</button>
         </div>
     </div>
 
     <script>
-        // إلصاق رابط الـ API المستخرج من الـ Apps Script هنا
-        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec"; 
-        const userEmail = localStorage.getItem('userEmail');
-        let globalDashboardData = null;
+        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
+        const sessionToken = localStorage.getItem('sessionToken');
+        const userRole = localStorage.getItem('userRole');
+        let localState = null;
 
-        if(!userEmail) window.location.href = 'index.html';
-        document.getElementById('displayEmail').innerText = userEmail;
+        if (!sessionToken || userRole !== 'student') { window.location.href = 'index.html'; }
+        document.getElementById('displayStudentName').innerText = localStorage.getItem('displayName');
 
-        async function fetchDashboard() {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'getStudentDashboard', payload: { email: userEmail } })
-            });
-            const data = await res.json();
-            if(!data.success) {
-                alert(data.message);
-                return;
-            }
-            globalDashboardData = data;
-            renderDashboard();
+        async function fetchStateEngine() {
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getStudentDashboard', payload: { sessionToken: sessionToken } })
+                });
+                const data = await res.json();
+                if(!data.success) { alert(data.message); return; }
+                localState = data;
+                renderUI();
+            } catch(e) { alert("Communication timeout with server ecosystem."); }
         }
 
-        function renderDashboard() {
-            document.getElementById('sId').innerText = globalDashboardData.studentInfo.id;
-            document.getElementById('sName').innerText = globalDashboardData.studentInfo.name;
-            document.getElementById('sLevel').innerText = globalDashboardData.studentInfo.level;
-            document.getElementById('sSup').innerText = globalDashboardData.studentInfo.supervisorName;
+        function renderUI() {
+            document.getElementById('lblId').innerText = localState.studentInfo.id;
+            document.getElementById('lblName').innerText = localState.studentInfo.name;
+            document.getElementById('lblLevel').innerText = localState.studentInfo.level;
+            document.getElementById('lblSup').innerText = localState.studentInfo.supervisorName;
             
-            const req = globalDashboardData.currentRequest;
-            document.getElementById('reqStatus').innerText = req.status;
-            document.getElementById('totalCredits').innerText = req.totalCredits;
-            document.getElementById('totalFees').innerText = req.totalFees;
+            const req = localState.currentRequest;
+            document.getElementById('lblStatus').innerText = req.status;
+            document.getElementById('lblCredits').innerText = req.totalCredits;
+            document.getElementById('lblFees').innerText = req.totalFees;
 
-            // Highlight progress steps
-            updateProgressTracker(req.status);
+            evaluateVisualTracker(req.status);
 
             if(req.comments) {
-                document.getElementById('supervisorCommentsContainer').style.display = 'block';
-                document.getElementById('supComments').innerText = req.comments;
+                document.getElementById('advisorFeedbackBox').style.display = 'block';
+                document.getElementById('txtFeedback').innerText = req.comments;
             } else {
-                document.getElementById('supervisorCommentsContainer').style.display = 'none';
+                document.getElementById('advisorFeedbackBox').style.display = 'none';
             }
 
-            const tbody = document.querySelector('#coursesTable tbody');
+            const tbody = document.querySelector('#catalogTable tbody');
             tbody.innerHTML = '';
 
-            const isLocked = !['Draft', 'Returned for Modification'].includes(req.status);
-            if(isLocked) {
-                document.getElementById('submitBtn').disabled = true;
-                document.getElementById('submitBtn').innerText = "Locked / Processing Workflow";
+            const activeLock = !['Draft', 'Returned for Modification'].includes(req.status);
+            if(activeLock) {
+                document.getElementById('commitActionBtn').disabled = true;
+                document.getElementById('commitActionBtn').innerText = "Application Structure Locked";
+            } else {
+                document.getElementById('commitActionBtn').disabled = false;
+                document.getElementById('commitActionBtn').innerText = "Lock Layout & Final Submit";
             }
 
-            globalDashboardData.courses.forEach(c => {
-                const isChecked = globalDashboardData.selectedCourses.includes(c.courseCode);
+            localState.courses.forEach(c => {
+                const isChecked = localState.selectedCourses.includes(c.courseCode);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>
                         <input type="checkbox" value="${c.courseCode}" 
-                        data-credits="${c.creditHours}" data-fee="${c.feePerCredit}"
-                        ${isChecked ? 'checked' : ''} ${isLocked || (c.availableSeats <= 0 && !isChecked) ? 'disabled' : ''} 
-                        onchange="calculateSelectedMetrics()">
+                        data-ch="${c.creditHours}" data-cost="${c.feePerCredit}"
+                        ${isChecked ? 'checked' : ''} ${activeLock || (c.availableSeats <= 0 && !isChecked) ? 'disabled' : ''} 
+                        onchange="evaluateClientMetrics()">
                     </td>
-                    <td>${c.courseCode}</td>
+                    <td><strong>${c.courseCode}</strong></td>
                     <td>${c.courseName}</td>
-                    <td>${c.creditHours} CH</td>
-                    <td><span class="badge">${c.availableSeats} Seats Left</span></td>
+                    <td><span class="badge">${c.creditHours} CH</span></td>
+                    <td>${c.availableSeats} / ${c.maxSeats} Units Left</td>
                     <td>${c.feePerCredit} EGP</td>
                 `;
                 tbody.appendChild(tr);
             });
-            calculateSelectedMetrics();
+            evaluateClientMetrics();
         }
 
-        function calculateSelectedMetrics() {
-            if(!globalDashboardData) return;
-            if(!['Draft', 'Returned for Modification'].includes(globalDashboardData.currentRequest.status)) return;
+        function evaluateClientMetrics() {
+            if(!localState) return;
+            if(!['Draft', 'Returned for Modification'].includes(localState.currentRequest.status)) return;
 
-            const checkboxes = document.querySelectorAll('#coursesTable input[type="checkbox"]:checked');
-            let totalCredits = 0;
-            let totalFees = 0;
-
-            checkboxes.forEach(cb => {
-                totalCredits += parseInt(cb.getAttribute('data-credits'));
-                totalFees += parseInt(cb.getAttribute('data-credits')) * parseFloat(cb.getAttribute('data-fee'));
+            const selected = document.querySelectorAll('#catalogTable input[type="checkbox"]:checked');
+            let ch = 0; let fees = 0;
+            selected.forEach(box => {
+                ch += parseInt(box.getAttribute('data-ch'));
+                fees += parseInt(box.getAttribute('data-ch')) * parseFloat(box.getAttribute('data-cost'));
             });
 
-            if(totalCredits > 10) {
-                alert("Alert: Maximum limit allowed is 10 Credit Hours! Reverting operation.");
+            if(ch > 10) {
+                alert("Credit Threshold Exception: Framework limits prevent selection patterns expanding beyond 10 Credit Hours.");
                 event.target.checked = false;
-                calculateSelectedMetrics();
+                evaluateClientMetrics();
                 return;
             }
-
-            document.getElementById('totalCredits').innerText = totalCredits;
-            document.getElementById('totalFees').innerText = totalFees;
+            document.getElementById('lblCredits').innerText = ch;
+            document.getElementById('lblFees').innerText = fees;
         }
 
-        function updateProgressTracker(status) {
-            document.querySelectorAll('.tracker-step').forEach(el => el.className = 'tracker-step');
-            if(status === 'Draft') document.getElementById('step-Draft').classList.add('active');
-            if(status === 'Submitted') {
-                document.getElementById('step-Draft').classList.add('completed');
-                document.getElementById('step-Submitted').classList.add('active');
+        function evaluateVisualTracker(status) {
+            document.querySelectorAll('.tracker-step').forEach(s => s.className = 'tracker-step');
+            if(status === 'Draft') document.getElementById('st-Draft').classList.add('active');
+            if(status === 'Submitted' || status === 'Under Academic Review') {
+                document.getElementById('st-Draft').classList.add('completed');
+                document.getElementById('st-Submitted').classList.add('active');
             }
             if(status === 'Approved by Supervisor') {
-                document.getElementById('step-Draft').classList.add('completed');
-                document.getElementById('step-Submitted').classList.add('completed');
-                document.getElementById('step-Approved').classList.add('active');
+                document.getElementById('st-Draft').classList.add('completed');
+                document.getElementById('st-Submitted').classList.add('completed');
+                document.getElementById('st-Approved').classList.add('active');
             }
             if(status === 'Pending Payment') {
-                document.getElementById('step-Draft').classList.add('completed');
-                document.getElementById('step-Submitted').classList.add('completed');
-                document.getElementById('step-Approved').classList.add('completed');
-                document.getElementById('step-PendingPayment').classList.add('active');
+                document.getElementById('st-Draft').classList.add('completed');
+                document.getElementById('st-Submitted').classList.add('completed');
+                document.getElementById('st-Approved').classList.add('completed');
+                document.getElementById('st-PendingPayment').classList.add('active');
             }
-            if(status === 'Registered Successfully') {
-                document.getElementById('step-Draft').classList.add('completed');
-                document.getElementById('step-Submitted').classList.add('completed');
-                document.getElementById('step-Approved').classList.add('completed');
-                document.getElementById('step-PendingPayment').classList.add('completed');
-                document.getElementById('step-Registered').classList.add('completed');
+            if(status === 'Registered Successfully' || status === 'Payment Confirmed') {
+                document.getElementById('st-Draft').classList.add('completed');
+                document.getElementById('st-Submitted').classList.add('completed');
+                document.getElementById('st-Approved').classList.add('completed');
+                document.getElementById('st-PendingPayment').classList.add('completed');
+                document.getElementById('st-Registered').classList.add('completed');
             }
         }
 
-        async function processFinalSubmission() {
-            const checkboxes = document.querySelectorAll('#coursesTable input[type="checkbox"]:checked');
-            const selectedCodes = Array.from(checkboxes).map(cb => cb.value);
+        async function executeFinalFormSubmission() {
+            const boxes = document.querySelectorAll('#catalogTable input[type="checkbox"]:checked');
+            const collection = Array.from(boxes).map(b => b.value);
+            if(collection.length === 0) { alert("Selection configuration is empty."); return; }
+            if(!confirm("Lock application state and dispatch to evaluation board? This blocks frontend changes.")) return;
 
-            if(selectedCodes.length === 0) {
-                alert("Please select at least one course before final submission.");
-                return;
-            }
-
-            if(!confirm("Are you sure? After submission you will not be able to change selections until reviewed.")) return;
-
-            const payload = {
-                email: userEmail,
-                studentId: globalDashboardData.studentInfo.id,
-                courses: selectedCodes
-            };
-
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'submitRegistration', payload: payload })
-            });
-            const out = await res.json();
-            alert(out.message);
-            fetchDashboard();
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'submitRegistration',
+                        payload: { sessionToken: sessionToken, studentId: localState.studentInfo.id, email: localStorage.getItem('userEmail'), courses: collection }
+                    })
+                });
+                const result = await response.json();
+                alert(result.message);
+                fetchStateEngine();
+            } catch(e) { alert("Data transmission error."); }
         }
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
-        window.onload = fetchDashboard;
+        window.onload = fetchStateEngine;
     </script>
 </body>
 </html>
