@@ -3,32 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Central Registrar Executive Dashboard</title>
+    <title>Central Registrar Command Hub</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="navbar">
-        <h2>College Control & Command Center</h2>
-        <button class="btn btn-danger" onclick="logout()">Logout</button>
+        <h2>Registrar Program Command Console</h2>
+        <button class="btn btn-danger" style="padding: 6px 14px;" onclick="logout()">Disconnect</button>
     </div>
+
     <div class="container">
-        <h3>Real-time Summer Program KPI Metrics</h3>
+        <h3>Program Metric Framework Indicators</h3>
         <div class="dashboard-grid">
-            <div class="card success"><h4>Total Fully Registered</h4><h1 id="m1">0</h1></div>
-            <div class="card warning"><h4>Pending Advisory Approvals</h4><h1 id="m2">0</h1></div>
-            <div class="card"><h4>Pending Financial Receipts</h4><h1 id="m3">0</h1></div>
-            <div class="card success" style="border-left-color: gold;"><h4>Total Collected Revenue</h4><h1 id="m4">0 EGP</h1></div>
+            <div class="card success">
+                <h3>Fully Enrolled Cohort</h3>
+                <h1 id="metricEnrolled" style="margin:0; font-size:36px; color:var(--success-color);">0</h1>
+            </div>
+            <div class="card warning">
+                <h3>Awaiting Advisory Review</h3>
+                <h1 id="metricAdvisory" style="margin:0; font-size:36px; color:var(--warning-color);">0</h1>
+            </div>
+            <div class="card">
+                <h3>Awaiting Cashier Clearance</h3>
+                <h1 id="metricFinance" style="margin:0; font-size:36px; color:var(--primary-color);">0</h1>
+            </div>
+            <div class="card success" style="border-left-color: #a855f7;">
+                <h3>Aggregated Gross Revenue</h3>
+                <h1 id="metricRevenue" style="margin:0; font-size:32px; color:#7c3aed;">0 EGP</h1>
+            </div>
         </div>
 
-        <h3>Course Occupancy Metrics & Capacity Constraints</h3>
-        <table id="adminCoursesTable">
+        <h3>Course Allocation & Satiation Analytics</h3>
+        <table id="analyticsTable">
             <thead>
                 <tr>
-                    <th>Course Code</th>
-                    <th>Course Name</th>
-                    <th>Allocated Seats</th>
-                    <th>Maximum Capacity</th>
-                    <th>Fill Percentage Rate</th>
+                    <th>Subject Code</th>
+                    <th>Course Label Designation</th>
+                    <th>Booked Seats</th>
+                    <th>Max Cap Constraint</th>
+                    <th>Satiation Bar Index</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -37,37 +50,49 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
+        const sessionToken = localStorage.getItem('sessionToken');
+        const userRole = localStorage.getItem('userRole');
 
-        async function loadAdminData() {
-            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAdminDashboard' }) });
-            const data = await res.json();
-            
-            document.getElementById('m1').innerText = data.metrics.registeredStudents;
-            document.getElementById('m2').innerText = data.metrics.pendingApprovals;
-            document.getElementById('m3').innerText = data.metrics.pendingPayments;
-            document.getElementById('m4').innerText = data.metrics.totalRevenue + " EGP";
+        if (!sessionToken || userRole !== 'admin') { window.location.href = 'index.html'; }
 
-            const tbody = document.querySelector('#adminCoursesTable tbody');
-            tbody.innerHTML = '';
-            data.courseStats.forEach(c => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${c.code}</strong></td>
-                    <td>${c.name}</td>
-                    <td>${c.allocated}</td>
-                    <td>${c.max}</td>
-                    <td>
-                        <div style="background:#eee; border-radius:4px; width:100%; height:15px; position:relative;">
-                            <div style="background:#0056b3; height:100%; border-radius:4px; width:${c.percentage};"></div>
-                            <small style="position:absolute; top:0; left:5px; color:black; font-size:10px;">${c.percentage}</small>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+        async function pullMetrics() {
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getAdminDashboard', payload: { sessionToken: sessionToken } })
+                });
+                const data = await res.json();
+                if (!data.success) { alert(data.message); return; }
+
+                document.getElementById('metricEnrolled').innerText = data.metrics.registeredStudents;
+                document.getElementById('metricAdvisory').innerText = data.metrics.pendingApprovals;
+                document.getElementById('metricFinance').innerText = data.metrics.pendingPayments;
+                document.getElementById('metricRevenue').innerText = data.metrics.totalRevenue.toLocaleString() + " EGP";
+
+                const tbody = document.querySelector('#analyticsTable tbody');
+                tbody.innerHTML = '';
+
+                data.courseStats.forEach(c => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${c.code}</strong></td>
+                        <td>${c.name}</td>
+                        <td>${c.allocated} Students</td>
+                        <td>${c.max} Slots</td>
+                        <td>
+                            <div style="background:#e2e8f0; border-radius:6px; width:100%; height:16px; position:relative; overflow:hidden;">
+                                <div style="background:linear-gradient(90deg, #3b82f6, #2563eb); height:100%; width:${c.percentage}; transition: width 0.5s;"></div>
+                                <small style="position:absolute; top:0; left:8px; color:#0f172a; font-weight:700; font-size:11px; line-height:16px;">${c.percentage}</small>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch(e) { alert("Error calculating global infrastructure metrics."); }
         }
+
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
-        window.onload = loadAdminData;
+        window.onload = pullMetrics;
     </script>
 </body>
 </html>
