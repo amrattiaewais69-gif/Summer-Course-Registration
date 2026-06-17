@@ -3,24 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Office Desk</title>
+    <title>Bursar Office Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="navbar">
-        <h2>University Accounting & Cashier Desk</h2>
-        <button class="btn btn-danger" onclick="logout()">Logout</button>
+        <h2>Student Accounts Ledger Desk</h2>
+        <div>
+            <span id="financeUserLabel" style="margin-right:20px; font-weight:600;"></span>
+            <button class="btn btn-danger" style="padding: 6px 14px;" onclick="logout()">Disconnect</button>
+        </div>
     </div>
+
     <div class="container">
-        <h3>Tuition Fee Tracking Panel</h3>
-        <table id="financeTable">
+        <h3>Tuition Clearing Pipeline</h3>
+        <p style="color:#64748b; margin-bottom:25px;">Verified advisor frameworks requiring validation are displayed below. Payments confirmed update student states to final enrollment status instantly.</p>
+        
+        <table id="ledgerTable">
             <thead>
                 <tr>
-                    <th>Student Identity</th>
-                    <th>Tuition Fees Due</th>
-                    <th>Status</th>
-                    <th>Payment Reference Number</th>
-                    <th>Accounting Actions</th>
+                    <th>Student Profile</th>
+                    <th>Calculated Obligation</th>
+                    <th>Current State</th>
+                    <th>Transaction Reference Token</th>
+                    <th>Accounting Reconciliation Control</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -29,52 +35,69 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
-        const userEmail = localStorage.getItem('userEmail');
+        const sessionToken = localStorage.getItem('sessionToken');
+        const userRole = localStorage.getItem('userRole');
 
-        async function loadFinanceData() {
-            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getFinanceDashboard' }) });
-            const data = await res.json();
-            const tbody = document.querySelector('#financeTable tbody');
-            tbody.innerHTML = '';
+        if (!sessionToken || userRole !== 'finance') { window.location.href = 'index.html'; }
+        document.getElementById('financeUserLabel').innerText = "Desk Operator: " + localStorage.getItem('displayName');
 
-            data.requests.forEach(r => {
-                const tr = document.createElement('tr');
-                const isSettled = r.status === 'Registered Successfully';
-                tr.innerHTML = `
-                    <td><strong>${r.studentName}</strong><br><small>ID: ${r.studentId}</small></td>
-                    <td style="color:green; font-weight:bold;">${r.totalFees} EGP</td>
-                    <td><span class="badge">${r.status}</span></td>
-                    <td>
-                        <input type="text" id="ref-${r.requestId}" value="${r.paymentRef || ''}" ${isSettled ? 'disabled' : ''} placeholder="Bank Receipt / Cash Ref">
-                    </td>
-                    <td>
-                        ${isSettled ? `<span style="color:green;">Verified ✓</span>` : `
-                            <button class="btn btn-success" onclick="updatePayment('${r.requestId}', true)">Mark Paid</button>
-                            <button class="btn btn-danger" onclick="updatePayment('${r.requestId}', false)">Set Unpaid</button>
-                        `}
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+        async function pullLedger() {
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getFinanceDashboard', payload: { sessionToken: sessionToken } })
+                });
+                const data = await res.json();
+                if (!data.success) { alert(data.message); return; }
+
+                const tbody = document.querySelector('#ledgerTable tbody');
+                tbody.innerHTML = '';
+
+                data.requests.forEach(r => {
+                    const tr = document.createElement('tr');
+                    const reconciled = r.status === 'Registered Successfully';
+
+                    tr.innerHTML = `
+                        <td><strong>${r.studentName}</strong><br><small style="color:#64748b;">ID: ${r.studentId}</small></td>
+                        <td style="font-weight:700; color:var(--success-color);">${r.totalFees} EGP</td>
+                        <td><span class="badge" style="background:#e0f2fe; color:#0369a1;">${r.status}</span></td>
+                        <td>
+                            <input type="text" id="tx-${r.requestId}" value="${r.paymentRef || ''}" ${reconciled ? 'disabled' : ''} placeholder="Bank Receipt Trace No." style="margin:0; padding:8px; font-size:13px;">
+                        </td>
+                        <td>
+                            ${reconciled ? `<span style="color:var(--success-color); font-weight:600; font-size:13px;">Cleared Account ✓</span>` : `
+                                <div style="display:flex; gap:5px;">
+                                    <button class="btn btn-success" style="padding:6px 12px; font-size:12px;" onclick="commitPaymentState('${r.requestId}', true)">Verify Payment</button>
+                                    <button class="btn btn-danger" style="padding:6px 12px; font-size:12px;" onclick="commitPaymentState('${r.requestId}', false)">Flag Unpaid</button>
+                                </div>
+                            `}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch(e) { alert("Ledger interface generation breakdown."); }
         }
 
-        async function updatePayment(reqId, isPaidFlag) {
-            const refNum = document.getElementById(`ref-${reqId}`).value.trim();
-            if(!refNum && isPaidFlag) { alert('Reference tracking number required.'); return; }
-            
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'processFinanceAction',
-                    payload: { requestId: reqId, isPaid: isPaidFlag, refNum: refNum, email: userEmail }
-                })
-            });
-            const out = await res.json();
-            alert(out.message);
-            loadFinanceData();
+        async function commitPaymentState(id, stateFlag) {
+            const txToken = document.getElementById(`tx-${id}`).value.trim();
+            if(!txToken && stateFlag) { alert("Reconciliation requires a valid receipt reference string."); return; }
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'processFinanceAction',
+                        payload: { sessionToken: sessionToken, requestId: id, isPaid: stateFlag, refNum: txToken, email: localStorage.getItem('userEmail') }
+                    })
+                });
+                const out = await res.json();
+                alert(out.message);
+                pullLedger();
+            } catch(e) { alert("Transaction processing block hit."); }
         }
+
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
-        window.onload = loadFinanceData;
+        window.onload = pullLedger;
     </script>
 </body>
 </html>
