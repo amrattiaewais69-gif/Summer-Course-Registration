@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Supervisor Approval Workflow</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h2>Academic Advisor Gateway</h2>
+        <div><span id="displayEmail" style="margin-right:20px;"></span><button class="btn btn-danger" onclick="logout()">Logout</button></div>
+    </div>
+
+    <div class="container">
+        <h3>Welcome Dr. <span id="supName">---</span></h3>
+        <p>The following students are registered under your supervision for the Summer Semester:</p>
+
+        <table id="requestsTable">
+            <thead>
+                <tr>
+                    <th>Student Info</th>
+                    <th>Selected Courses</th>
+                    <th>Total Credits</th>
+                    <th>Current Status</th>
+                    <th>Review Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
+        const userEmail = localStorage.getItem('userEmail');
+        if(!userEmail) window.location.href = 'index.html';
+        document.getElementById('displayEmail').innerText = userEmail;
+
+        async function loadSupervisorData() {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'getSupervisorDashboard', payload: { email: userEmail } })
+            });
+            const data = await res.json();
+            if(!data.success) { alert(data.message); return; }
+
+            document.getElementById('supName').innerText = data.supervisorName;
+            const tbody = document.querySelector('#requestsTable tbody');
+            tbody.innerHTML = '';
+
+            data.requests.forEach(r => {
+                const tr = document.createElement('tr');
+                const requiresAction = r.status === 'Submitted';
+
+                tr.innerHTML = `
+                    <td><strong>${r.studentName}</strong><br><small>ID: ${r.studentId} | Lvl: ${r.level}</small></td>
+                    <td><small>${r.courses}</small></td>
+                    <td>${r.totalCredits} CH</td>
+                    <td><span style="color:#0056b3; font-weight:bold;">${r.status}</span></td>
+                    <td>
+                        ${requiresAction ? `
+                            <textarea id="comm-${r.requestId}" placeholder="Add advisory note here..." style="font-size:12px;"></textarea><br>
+                            <button class="btn btn-success" style="padding:5px 10px; font-size:12px;" onclick="submitAction('${r.requestId}', 'Approve')">Approve</button>
+                            <button class="btn btn-warning" style="padding:5px 10px; font-size:12px;" onclick="submitAction('${r.requestId}', 'Return')">Return for Mod</button>
+                            <button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="submitAction('${r.requestId}', 'Reject')">Reject</button>
+                        ` : `<span style="color:gray; font-size:12px;">Processed</span>`}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function submitAction(reqId, actionType) {
+            const comment = document.getElementById(`comm-${reqId}`).value.trim();
+            if(!comment && actionType !== 'Approve') {
+                alert("Please write a comment explaining the reason for returning/rejecting the request.");
+                return;
+            }
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'processSupervisorAction',
+                    payload: { requestId: reqId, action: actionType, comments: comment, email: userEmail }
+                })
+            });
+            const out = await res.json();
+            alert(out.message);
+            loadSupervisorData();
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+        window.onload = loadSupervisorData;
+    </script>
+</body>
+</html>
