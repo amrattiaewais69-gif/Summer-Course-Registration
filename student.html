@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Summer Registration Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h2>Medical College Summer Portal</h2>
+        <div>
+            <span id="displayEmail" style="margin-right:20px; font-weight:bold;"></span>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tracker-wrapper" id="statusTracker">
+            <div class="tracker-step" id="step-Draft">Draft</div>
+            <div class="tracker-step" id="step-Submitted">Submitted</div>
+            <div class="tracker-step" id="step-Approved">Academic Approved</div>
+            <div class="tracker-step" id="step-PendingPayment">Pending Payment</div>
+            <div class="tracker-step" id="step-Registered">Registered Successfully</div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Student Profile</h3>
+                <p><strong>ID:</strong> <span id="sId">---</span></p>
+                <p><strong>Name:</strong> <span id="sName">---</span></p>
+                <p><strong>Level:</strong> <span id="sLevel">---</span></p>
+                <p><strong>Academic Advisor:</strong> <span id="sSup">---</span></p>
+            </div>
+            <div class="card success">
+                <h3>Registration Overview</h3>
+                <p><strong>Application Status:</strong> <span id="reqStatus" style="font-weight: bold; color: #0056b3;">Draft</span></p>
+                <p><strong>Total Selected Credits:</strong> <span id="totalCredits">0</span> / 10 CH</p>
+                <p><strong>Estimated Financial Fees:</strong> <span id="totalFees">0</span> EGP</p>
+            </div>
+        </div>
+
+        <div id="supervisorCommentsContainer" class="card danger" style="display:none; margin-bottom: 20px;">
+            <h4>Supervisor Return Comments:</h4>
+            <p id="supComments"></p>
+        </div>
+
+        <h3>Available Summer Courses</h3>
+        <table id="coursesTable">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Course Code</th>
+                    <th>Course Name</th>
+                    <th>Credit Hours</th>
+                    <th>Available Seats</th>
+                    <th>Fee Per Credit</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+        
+        <div style="margin-top:20px; text-align:right;">
+            <button id="submitBtn" class="btn btn-success" onclick="processFinalSubmission()">Finalize & Submit Request</button>
+        </div>
+    </div>
+
+    <script>
+        // إلصاق رابط الـ API المستخرج من الـ Apps Script هنا
+        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec"; 
+        const userEmail = localStorage.getItem('userEmail');
+        let globalDashboardData = null;
+
+        if(!userEmail) window.location.href = 'index.html';
+        document.getElementById('displayEmail').innerText = userEmail;
+
+        async function fetchDashboard() {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'getStudentDashboard', payload: { email: userEmail } })
+            });
+            const data = await res.json();
+            if(!data.success) {
+                alert(data.message);
+                return;
+            }
+            globalDashboardData = data;
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            document.getElementById('sId').innerText = globalDashboardData.studentInfo.id;
+            document.getElementById('sName').innerText = globalDashboardData.studentInfo.name;
+            document.getElementById('sLevel').innerText = globalDashboardData.studentInfo.level;
+            document.getElementById('sSup').innerText = globalDashboardData.studentInfo.supervisorName;
+            
+            const req = globalDashboardData.currentRequest;
+            document.getElementById('reqStatus').innerText = req.status;
+            document.getElementById('totalCredits').innerText = req.totalCredits;
+            document.getElementById('totalFees').innerText = req.totalFees;
+
+            // Highlight progress steps
+            updateProgressTracker(req.status);
+
+            if(req.comments) {
+                document.getElementById('supervisorCommentsContainer').style.display = 'block';
+                document.getElementById('supComments').innerText = req.comments;
+            } else {
+                document.getElementById('supervisorCommentsContainer').style.display = 'none';
+            }
+
+            const tbody = document.querySelector('#coursesTable tbody');
+            tbody.innerHTML = '';
+
+            const isLocked = !['Draft', 'Returned for Modification'].includes(req.status);
+            if(isLocked) {
+                document.getElementById('submitBtn').disabled = true;
+                document.getElementById('submitBtn').innerText = "Locked / Processing Workflow";
+            }
+
+            globalDashboardData.courses.forEach(c => {
+                const isChecked = globalDashboardData.selectedCourses.includes(c.courseCode);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <input type="checkbox" value="${c.courseCode}" 
+                        data-credits="${c.creditHours}" data-fee="${c.feePerCredit}"
+                        ${isChecked ? 'checked' : ''} ${isLocked || (c.availableSeats <= 0 && !isChecked) ? 'disabled' : ''} 
+                        onchange="calculateSelectedMetrics()">
+                    </td>
+                    <td>${c.courseCode}</td>
+                    <td>${c.courseName}</td>
+                    <td>${c.creditHours} CH</td>
+                    <td><span class="badge">${c.availableSeats} Seats Left</span></td>
+                    <td>${c.feePerCredit} EGP</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            calculateSelectedMetrics();
+        }
+
+        function calculateSelectedMetrics() {
+            if(!globalDashboardData) return;
+            if(!['Draft', 'Returned for Modification'].includes(globalDashboardData.currentRequest.status)) return;
+
+            const checkboxes = document.querySelectorAll('#coursesTable input[type="checkbox"]:checked');
+            let totalCredits = 0;
+            let totalFees = 0;
+
+            checkboxes.forEach(cb => {
+                totalCredits += parseInt(cb.getAttribute('data-credits'));
+                totalFees += parseInt(cb.getAttribute('data-credits')) * parseFloat(cb.getAttribute('data-fee'));
+            });
+
+            if(totalCredits > 10) {
+                alert("Alert: Maximum limit allowed is 10 Credit Hours! Reverting operation.");
+                event.target.checked = false;
+                calculateSelectedMetrics();
+                return;
+            }
+
+            document.getElementById('totalCredits').innerText = totalCredits;
+            document.getElementById('totalFees').innerText = totalFees;
+        }
+
+        function updateProgressTracker(status) {
+            document.querySelectorAll('.tracker-step').forEach(el => el.className = 'tracker-step');
+            if(status === 'Draft') document.getElementById('step-Draft').classList.add('active');
+            if(status === 'Submitted') {
+                document.getElementById('step-Draft').classList.add('completed');
+                document.getElementById('step-Submitted').classList.add('active');
+            }
+            if(status === 'Approved by Supervisor') {
+                document.getElementById('step-Draft').classList.add('completed');
+                document.getElementById('step-Submitted').classList.add('completed');
+                document.getElementById('step-Approved').classList.add('active');
+            }
+            if(status === 'Pending Payment') {
+                document.getElementById('step-Draft').classList.add('completed');
+                document.getElementById('step-Submitted').classList.add('completed');
+                document.getElementById('step-Approved').classList.add('completed');
+                document.getElementById('step-PendingPayment').classList.add('active');
+            }
+            if(status === 'Registered Successfully') {
+                document.getElementById('step-Draft').classList.add('completed');
+                document.getElementById('step-Submitted').classList.add('completed');
+                document.getElementById('step-Approved').classList.add('completed');
+                document.getElementById('step-PendingPayment').classList.add('completed');
+                document.getElementById('step-Registered').classList.add('completed');
+            }
+        }
+
+        async function processFinalSubmission() {
+            const checkboxes = document.querySelectorAll('#coursesTable input[type="checkbox"]:checked');
+            const selectedCodes = Array.from(checkboxes).map(cb => cb.value);
+
+            if(selectedCodes.length === 0) {
+                alert("Please select at least one course before final submission.");
+                return;
+            }
+
+            if(!confirm("Are you sure? After submission you will not be able to change selections until reviewed.")) return;
+
+            const payload = {
+                email: userEmail,
+                studentId: globalDashboardData.studentInfo.id,
+                courses: selectedCodes
+            };
+
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'submitRegistration', payload: payload })
+            });
+            const out = await res.json();
+            alert(out.message);
+            fetchDashboard();
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+        window.onload = fetchDashboard;
+    </script>
+</body>
+</html>
