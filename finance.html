@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Office Desk</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h2>University Accounting & Cashier Desk</h2>
+        <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+    <div class="container">
+        <h3>Tuition Fee Tracking Panel</h3>
+        <table id="financeTable">
+            <thead>
+                <tr>
+                    <th>Student Identity</th>
+                    <th>Tuition Fees Due</th>
+                    <th>Status</th>
+                    <th>Payment Reference Number</th>
+                    <th>Accounting Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
+        const userEmail = localStorage.getItem('userEmail');
+
+        async function loadFinanceData() {
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getFinanceDashboard' }) });
+            const data = await res.json();
+            const tbody = document.querySelector('#financeTable tbody');
+            tbody.innerHTML = '';
+
+            data.requests.forEach(r => {
+                const tr = document.createElement('tr');
+                const isSettled = r.status === 'Registered Successfully';
+                tr.innerHTML = `
+                    <td><strong>${r.studentName}</strong><br><small>ID: ${r.studentId}</small></td>
+                    <td style="color:green; font-weight:bold;">${r.totalFees} EGP</td>
+                    <td><span class="badge">${r.status}</span></td>
+                    <td>
+                        <input type="text" id="ref-${r.requestId}" value="${r.paymentRef || ''}" ${isSettled ? 'disabled' : ''} placeholder="Bank Receipt / Cash Ref">
+                    </td>
+                    <td>
+                        ${isSettled ? `<span style="color:green;">Verified ✓</span>` : `
+                            <button class="btn btn-success" onclick="updatePayment('${r.requestId}', true)">Mark Paid</button>
+                            <button class="btn btn-danger" onclick="updatePayment('${r.requestId}', false)">Set Unpaid</button>
+                        `}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function updatePayment(reqId, isPaidFlag) {
+            const refNum = document.getElementById(`ref-${reqId}`).value.trim();
+            if(!refNum && isPaidFlag) { alert('Reference tracking number required.'); return; }
+            
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'processFinanceAction',
+                    payload: { requestId: reqId, isPaid: isPaidFlag, refNum: refNum, email: userEmail }
+                })
+            });
+            const out = await res.json();
+            alert(out.message);
+            loadFinanceData();
+        }
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+        window.onload = loadFinanceData;
+    </script>
+</body>
+</html>
