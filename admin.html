@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Registrar Executive Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h2>College Control & Command Center</h2>
+        <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+    <div class="container">
+        <h3>Real-time Summer Program KPI Metrics</h3>
+        <div class="dashboard-grid">
+            <div class="card success"><h4>Total Fully Registered</h4><h1 id="m1">0</h1></div>
+            <div class="card warning"><h4>Pending Advisory Approvals</h4><h1 id="m2">0</h1></div>
+            <div class="card"><h4>Pending Financial Receipts</h4><h1 id="m3">0</h1></div>
+            <div class="card success" style="border-left-color: gold;"><h4>Total Collected Revenue</h4><h1 id="m4">0 EGP</h1></div>
+        </div>
+
+        <h3>Course Occupancy Metrics & Capacity Constraints</h3>
+        <table id="adminCoursesTable">
+            <thead>
+                <tr>
+                    <th>Course Code</th>
+                    <th>Course Name</th>
+                    <th>Allocated Seats</th>
+                    <th>Maximum Capacity</th>
+                    <th>Fill Percentage Rate</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
+
+        async function loadAdminData() {
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAdminDashboard' }) });
+            const data = await res.json();
+            
+            document.getElementById('m1').innerText = data.metrics.registeredStudents;
+            document.getElementById('m2').innerText = data.metrics.pendingApprovals;
+            document.getElementById('m3').innerText = data.metrics.pendingPayments;
+            document.getElementById('m4').innerText = data.metrics.totalRevenue + " EGP";
+
+            const tbody = document.querySelector('#adminCoursesTable tbody');
+            tbody.innerHTML = '';
+            data.courseStats.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${c.code}</strong></td>
+                    <td>${c.name}</td>
+                    <td>${c.allocated}</td>
+                    <td>${c.max}</td>
+                    <td>
+                        <div style="background:#eee; border-radius:4px; width:100%; height:15px; position:relative;">
+                            <div style="background:#0056b3; height:100%; border-radius:4px; width:${c.percentage};"></div>
+                            <small style="position:absolute; top:0; left:5px; color:black; font-size:10px;">${c.percentage}</small>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+        window.onload = loadAdminData;
+    </script>
+</body>
+</html>
