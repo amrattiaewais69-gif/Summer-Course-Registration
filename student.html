@@ -8,7 +8,10 @@
 </head>
 <body>
     <div class="navbar">
-        <h2>Summer Course Registration Portal</h2>
+        <div class="nav-brand">
+            <img src="logo.png" class="uni-logo-nav" alt="University Logo">
+            <h2>Summer Course Registration Portal</h2>
+        </div>
         <div>
             <span id="displayStudentName" style="margin-right:20px; font-weight:600;"></span>
             <button class="btn btn-danger" style="padding: 6px 14px;" onclick="logout()">Disconnect</button>
@@ -16,7 +19,6 @@
     </div>
 
     <div class="container">
-        <!-- Visual Progress Tracker Panel -->
         <div class="tracker-wrapper" id="trackerComponent">
             <div class="tracker-step" id="st-Draft">● Draft Selection</div>
             <div class="tracker-step" id="st-Submitted">● Sent to Advisor</div>
