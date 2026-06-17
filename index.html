@@ -8,7 +8,11 @@
 </head>
 <body>
     <div class="login-box">
-        <h2 style="color:#0f172a; margin-top:0; font-size:24px; text-align:center;">Summer Portal Login</h2>
+        <div class="logo-container">
+            <!-- استدعاء اللوجو المرفوع على الجيت هب مباشرة -->
+            <img src="logo.png" class="uni-logo-login" alt="University Logo">
+        </div>
+        <h2 style="color:#0f172a; margin-top:0; font-size:24px; text-align:center; font-weight:700;">Summer Portal Login</h2>
         <p style="color:#64748b; font-size:14px; text-align:center; margin-bottom:30px;">Access your workspace parameters safely.</p>
         
         <form id="loginForm">
@@ -31,7 +35,6 @@
     </div>
 
     <script>
-        // ⚠️ ضع هنا الرابط الجديد والمستخرج بعد عمل (New Deployment) 
         const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec"; 
 
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -42,14 +45,12 @@
             const p = document.getElementById('password').value;
             const r = document.getElementById('userRole').value;
             
-            // تحسين واجهة المستخدم: تعطيل الزر وتغيير النص لتوضيح جاري الاتصال
             btn.disabled = true;
             btn.innerText = "Connecting to Central Cloud Server...";
             
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    // استخدام text/plain يتفادى حظر المتصفحات (CORS Preflight OPTIONS) تماماً مع جوجل سكريبت
                     headers: {
                         'Content-Type': 'text/plain;charset=utf-8'
                     },
@@ -67,7 +68,6 @@
                     localStorage.setItem('userRole', r);
                     localStorage.setItem('displayName', result.name);
                     
-                    // التوجيه التلقائي إلى لوحة التحكم الخاصة بالدور المحدد
                     window.location.href = r + '.html';
                 } else {
                     alert("Authentication Failure: " + result.message);
@@ -76,7 +76,6 @@
                 console.error(err);
                 alert("Network Connection Error to Central Server.\n\nتأكد من الآتي لحل المشكلة:\n1. أن الرابط المنسوخ صحيح ومطابق.\n2. أنك قمت بعمل Deploy -> New Deployment وجعلت صلاحية الوصول Anyone.\n3. أن المتصفح لا يمنع السكريبتات الخارجية.");
             } finally {
-                // إعادة الزر لحالته الطبيعية إذا فشل الدخول
                 btn.disabled = false;
                 btn.innerText = "Authenticate Identity";
             }
