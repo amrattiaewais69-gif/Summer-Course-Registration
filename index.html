@@ -26,25 +26,39 @@
                 <option value="admin">Central Registrar Dashboard</option>
             </select>
             
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">Authenticate Identity</button>
+            <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">Authenticate Identity</button>
         </form>
     </div>
 
     <script>
-        // الصق الرابط المستخرج لـ Web App التابع لـ Apps Script هنا
-        const API_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"; 
+        // ⚠️ ضع هنا الرابط الجديد والمستخرج بعد عمل (New Deployment) 
+        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec"; 
 
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value;
             const r = document.getElementById('userRole').value;
             
+            // تحسين واجهة المستخدم: تعطيل الزر وتغيير النص لتوضيح جاري الاتصال
+            btn.disabled = true;
+            btn.innerText = "Connecting to Central Cloud Server...";
+            
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'login', payload: { username: u, password: p, role: r } })
+                    // استخدام text/plain يتفادى حظر المتصفحات (CORS Preflight OPTIONS) تماماً مع جوجل سكريبت
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify({ 
+                        action: 'login', 
+                        payload: { username: u, password: p, role: r } 
+                    })
                 });
+                
                 const result = await response.json();
                 
                 if (result.success) {
@@ -53,12 +67,18 @@
                     localStorage.setItem('userRole', r);
                     localStorage.setItem('displayName', result.name);
                     
+                    // التوجيه التلقائي إلى لوحة التحكم الخاصة بالدور المحدد
                     window.location.href = r + '.html';
                 } else {
                     alert("Authentication Failure: " + result.message);
                 }
             } catch(err) {
-                alert("Network Connection Error to Central Server.");
+                console.error(err);
+                alert("Network Connection Error to Central Server.\n\nتأكد من الآتي لحل المشكلة:\n1. أن الرابط المنسوخ صحيح ومطابق.\n2. أنك قمت بعمل Deploy -> New Deployment وجعلت صلاحية الوصول Anyone.\n3. أن المتصفح لا يمنع السكريبتات الخارجية.");
+            } finally {
+                // إعادة الزر لحالته الطبيعية إذا فشل الدخول
+                btn.disabled = false;
+                btn.innerText = "Authenticate Identity";
             }
         });
     </script>
