@@ -28,6 +28,7 @@
                     <th>Student Profile</th>
                     <th>Calculated Obligation</th>
                     <th>Current State</th>
+                    <th>Payment Method & Date</th>
                     <th>Transaction Reference Token</th>
                     <th>Accounting Reconciliation Control</th>
                 </tr>
@@ -59,13 +60,29 @@
                 data.requests.forEach(r => {
                     const tr = document.createElement('tr');
                     const reconciled = r.status === 'Registered Successfully';
+                    
+                    // إعداد التاريخ الافتراضي ليكون تاريخ اليوم في الـ Input لسهولة الاستخدام إذا كان الدفع اليوم
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const existingDate = r.paymentDate ? new Date(r.paymentDate).toISOString().split('T')[0] : todayStr;
 
                     tr.innerHTML = `
                         <td><strong>${r.studentName}</strong><br><small style="color:#64748b;">ID: ${r.studentId}</small></td>
                         <td style="font-weight:700; color:var(--success-color);">${r.totalFees} EGP</td>
                         <td><span class="badge" style="background:#e0f2fe; color:#0369a1;">${r.status}</span></td>
+                        
                         <td>
-                            <input type="text" id="tx-${r.requestId}" value="${r.paymentRef || ''}" ${reconciled ? 'disabled' : ''} placeholder="Bank Receipt Trace No." style="margin:0; padding:8px; font-size:13px;">
+                            <select id="method-${r.requestId}" ${reconciled ? 'disabled' : ''} style="margin: 0 0 8px 0; padding: 8px; font-size: 13px; height: auto;">
+                                <option value="InstaPay" ${r.paymentMethod === 'InstaPay' ? 'selected' : ''}>InstaPay Transfer</option>
+                                <option value="Bank Transfer" ${r.paymentMethod === 'Bank Transfer' ? 'selected' : ''}>Bank Account Deposit</option>
+                                <option value="Cash at Uni" ${r.paymentMethod === 'Cash at Uni' ? 'selected' : ''}>Cash at University Campus</option>
+                                <option value="Vodafone Cash" ${r.paymentMethod === 'Vodafone Cash' ? 'selected' : ''}>Vodafone Cash</option>
+                                <option value="Online Payment" ${r.paymentMethod === 'Online Payment' ? 'selected' : ''}>Online Credit Card</option>
+                            </select>
+                            <input type="date" id="date-${r.requestId}" value="${existingDate}" ${reconciled ? 'disabled' : ''} style="margin:0; padding:8px; font-size:13px; height: auto;">
+                        </td>
+                        
+                        <td>
+                            <input type="text" id="tx-${r.requestId}" value="${r.paymentRef || ''}" ${reconciled ? 'disabled' : ''} placeholder="Bank Receipt Trace No." style="margin:0; padding:8px; font-size:13px; height: auto;">
                         </td>
                         <td>
                             ${reconciled ? `<span style="color:var(--success-color); font-weight:600; font-size:13px;">Cleared Account ✓</span>` : `
@@ -83,14 +100,29 @@
 
         async function commitPaymentState(id, stateFlag) {
             const txToken = document.getElementById(`tx-${id}`).value.trim();
+            const payMethod = document.getElementById(`method-${id}`).value;
+            const payDate = document.getElementById(`date-${id}`).value;
+
             if(!txToken && stateFlag) { alert("Reconciliation requires a valid receipt reference string."); return; }
+            if(!payDate && stateFlag) { alert("Please determine a valid custom payment date parameters."); return; }
 
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
                     body: JSON.stringify({
                         action: 'processFinanceAction',
-                        payload: { sessionToken: sessionToken, requestId: id, isPaid: stateFlag, refNum: txToken, email: localStorage.getItem('userEmail') }
+                        payload: { 
+                            sessionToken: sessionToken, 
+                            requestId: id, 
+                            isPaid: stateFlag, 
+                            refNum: txToken,
+                            paymentMethod: payMethod,
+                            paymentDate: payDate,
+                            email: localStorage.getItem('userEmail') 
+                        }
                     })
                 });
                 const out = await res.json();
