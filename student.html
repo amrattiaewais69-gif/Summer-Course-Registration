@@ -30,6 +30,10 @@
         <div class="dashboard-grid">
             <div class="card">
                 <h3>Student Profile Architecture</h3>
+                
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <img id="studentPhoto" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'></svg>" alt="Student Photo" style="width: 100px; height: 125px; border-radius: 6px; object-fit: cover; border: 2px solid #e2e8f0; background-color: #f8fafc;" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';">
+                </div>
                 <p><strong>System Identification ID:</strong> <span id="lblId">---</span></p>
                 <p><strong>Full Name:</strong> <span id="lblName">---</span></p>
                 <p><strong>Faculty / College:</strong> <span id="lblFaculty">---</span></p>
@@ -93,6 +97,12 @@
 
         function renderUI() {
             document.getElementById('lblId').innerText = localState.studentInfo.id;
+            
+            // ربط وعرض صورة الطالب ديناميكياً من مجلد photo
+            if (localState.studentInfo.id) {
+                document.getElementById('studentPhoto').src = "photo/" + localState.studentInfo.id + ".jpg";
+            }
+
             document.getElementById('lblName').innerText = localState.studentInfo.name;
             // ربط وعرض اسم الكلية برمجياً من الخادم
             document.getElementById('lblFaculty').innerText = localState.studentInfo.faculty || "---";
