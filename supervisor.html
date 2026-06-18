@@ -92,7 +92,7 @@
             const feedbackInput = document.getElementById(`note-${id}`).value.trim();
             // شرط إضافي: طلب السبب إلزامي فقط في حالة الرفض أو الإعادة للتعديل، اختياري في حالة الموافقة
             if(!feedbackInput && actionToken !== 'Approve') {
-                alert("Justification logs are required for modification cycles or structural rejection actions.");
+                alert("You must enter a reason before returning the request for modification or rejecting it.");
                 return;
             }
 
