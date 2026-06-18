@@ -16,6 +16,15 @@
     </div>
 
     <div class="container">
+        <div class="card" style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0;">
+            <h3>Data Export Operations</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn btn-success" onclick="triggerExport('exportPaid')">Export Paid Students (CSV)</button>
+                <button class="btn btn-warning" onclick="triggerExport('exportPendingApproval')">Export Awaiting Approval (CSV)</button>
+                <button class="btn btn-primary" onclick="triggerExport('exportUnpaid')">Export Approved & Unpaid (CSV)</button>
+            </div>
+        </div>
+
         <h3>Program Metric Framework Indicators</h3>
         <div class="dashboard-grid">
             <div class="card success">
@@ -92,6 +101,32 @@
                     tbody.appendChild(tr);
                 });
             } catch(e) { alert("Error calculating global infrastructure metrics."); }
+        }
+
+        // دالة تصدير البيانات
+        async function triggerExport(actionName) {
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: actionName, payload: { sessionToken: sessionToken } })
+                });
+                
+                // نفترض أن السيرفر يرجع البيانات في حقل يسمى csvData
+                const data = await res.json();
+                if (data.csvData) {
+                    const blob = new Blob([data.csvData], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `${actionName}_report.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    alert("No data available to export.");
+                }
+            } catch(e) { alert("Failed to generate export file."); }
         }
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
