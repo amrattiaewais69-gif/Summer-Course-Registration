@@ -3,216 +3,325 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Enrollment Gateway</title>
+    <title>Student Portal - University of East Capital</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .profile-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .info-item {
+            background: #f8fafc;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border-left: 4px solid #1e3a8a;
+        }
+        .info-item label {
+            display: block;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .info-item span {
+            font-size: 15px;
+            color: #0f172a;
+            font-weight: 700;
+        }
+        .payment-box {
+            background: #f1f5f9;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #10b981;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #printFrame { display: none; }
+    </style>
 </head>
 <body>
     <div class="navbar">
         <div class="nav-brand">
-            <img src="logo.png" class="uni-logo-nav" alt="University Logo">
-            <h2>Summer Course Registration Portal</h2>
+            <h2>Student Registration & Financial Portal</h2>
         </div>
         <div>
-            <span id="displayStudentName" style="margin-right:20px; font-weight:600;"></span>
+            <span id="studentUserLabel" style="margin-right:20px; font-weight:600; color:#fff;"></span>
             <button class="btn btn-danger" style="padding: 6px 14px;" onclick="logout()">Disconnect</button>
         </div>
     </div>
 
     <div class="container">
-        <div class="tracker-wrapper" id="trackerComponent">
-            <div class="tracker-step" id="st-Draft">● Draft Selection</div>
-            <div class="tracker-step" id="st-Submitted">● Sent to Advisor</div>
-            <div class="tracker-step" id="st-Approved">● Layout Approved</div>
-            <div class="tracker-step" id="st-PendingPayment">● Financial Pending</div>
-            <div class="tracker-step" id="st-Registered">● Registration Confirmed ✓</div>
-        </div>
-
-        <div class="dashboard-grid">
-            <div class="card">
-                <h3>Student Profile Architecture</h3>
-                <p><strong>System Identification ID:</strong> <span id="lblId">---</span></p>
-                <p><strong>Full Name:</strong> <span id="lblName">---</span></p>
-                <p><strong>Academic Seniority Level:</strong> <span id="lblLevel">---</span></p>
-                <p><strong>Assigned Advisor:</strong> <span id="lblSup">---</span></p>
-            </div>
-            <div class="card success">
-                <h3>Live Billing & Credit Matrix</h3>
-                <p><strong>Application Phase:</strong> <span id="lblStatus" style="font-weight:bold; color:var(--primary-color);">---</span></p>
-                <p><strong>Calculated Workload:</strong> <span id="lblCredits">0</span> / 10 Max CH</p>
-                <p><strong>Aggregated Invoiced Fees:</strong> <span id="lblFees">0</span> EGP</p>
+        <div class="profile-card">
+            <h3 style="margin-top:0; color:#1e3a8a; border-bottom:2px solid #f1f5f9; padding-bottom:10px;">📋 البيانات الشخصية والأكاديمية (Student Profile)</h3>
+            <div class="profile-grid">
+                <div class="info-item">
+                    <label>اسم الطالب (Student Name)</label>
+                    <span id="lblStudentName">-</span>
+                </div>
+                <div class="info-item">
+                    <label>رقم الملف (Student ID)</label>
+                    <span id="lblStudentID">-</span>
+                </div>
+                <div class="info-item" style="border-left-color: #0284c7;">
+                    <label>الكلية المقيد بها (Faculty / College)</label>
+                    <span id="lblStudentFaculty" style="color:#0284c7;">-</span>
+                </div>
+                <div class="info-item" style="border-left-color: #ef4444;">
+                    <label>الحالة المادية (Financial Status)</label>
+                    <span id="lblFinancialStatus">-</span>
+                </div>
             </div>
         </div>
 
-        <div id="advisorFeedbackBox" class="card danger" style="display:none; margin-bottom: 25px;">
-            <h3>Academic Advisory Feedback & Constraints</h3>
-            <p id="txtFeedback" style="color:var(--dark-neutral); font-weight:500;"></p>
+        <div class="profile-card">
+            <h3 style="margin-top:0; color:#1e3a8a;">📚 المقررات المسجلة (Enrolled Courses)</h3>
+            <div id="coursesList" style="font-weight: 600; color: #334155; padding: 10px; background: #f8fafc; border-radius: 6px;">
+                -
+            </div>
         </div>
 
-        <h3>Available Summer Program Curriculum Matrix</h3>
-        <table id="catalogTable">
-            <thead>
-                <tr>
-                    <th>Selection Trigger</th>
-                    <th>Course Code</th>
-                    <th>Course Subject Name</th>
-                    <th>Weight Structure</th>
-                    <th>Live Seat Availability</th>
-                    <th>Unit Cost</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        
-        <div style="margin-top:30px; text-align:right;">
-            <button id="commitActionBtn" class="btn btn-success" onclick="executeFinalFormSubmission()">Lock Layout & Final Submit</button>
+        <div class="profile-card">
+            <h3 style="margin-top:0; color:#1e3a8a;">💰 سجل مدفوعاتك وإيصالاتك (Payment Receipts History)</h3>
+            <div id="studentPaymentsHistory">
+                <p style="color:#64748b; font-style:italic;">جاري تحميل سجل المدفوعات...</p>
+            </div>
         </div>
     </div>
 
+    <iframe id="printFrame"></iframe>
+
     <script>
+        // ⚠️ يرجى التأكد من مطابقة رابط النشر (Web App URL) الخاص بك هنا
         const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
         const sessionToken = localStorage.getItem('sessionToken');
         const userRole = localStorage.getItem('userRole');
-        let localState = null;
 
         if (!sessionToken || userRole !== 'student') { window.location.href = 'index.html'; }
-        document.getElementById('displayStudentName').innerText = localStorage.getItem('displayName');
+        document.getElementById('studentUserLabel').innerText = "Student: " + localStorage.getItem('displayName');
 
-        async function fetchStateEngine() {
+        // دالة التفقيط العربي لتحويل الأرقام المطبوعة إلى نصوص
+        function tafqeet(num) {
+            if(num === 0) return "صفر";
+            const ones = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
+            const tens = ["", "عشرة", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
+            const hundreds = ["", "مائة", "مائتان", "ثلاثمائة", "أربعمائة", "خمسمائة", "ستمائة", "سبعون", "ثمانمائة", "تسعمائة"];
+            
+            function convertUnderThousand(n) {
+                let text = "";
+                let h = Math.floor(n / 100);
+                let rem = n % 100;
+                let t = Math.floor(rem / 10);
+                let o = rem % 10;
+                
+                if (h > 0) text += hundreds[h];
+                if (rem > 0) {
+                    if (text !== "") text += " و ";
+                    if (rem === 11) text += "أحد عشر";
+                    else if (rem === 12) text += "اثنا عشر";
+                    else if (rem < 10) text += ones[o];
+                    else if (rem < 20) text += ones[o] + " عشر";
+                    else {
+                        if (o > 0) text += ones[o] + " و ";
+                        text += tens[t];
+                    }
+                }
+                return text;
+            }
+
+            let str = "";
+            let thousands = Math.floor(num / 1000);
+            let remThousand = num % 1000;
+
+            if (thousands > 0) {
+                if(thousands === 1) str += "ألف";
+                else if(thousands === 2) str += "ألفان";
+                else if(thousands >= 3 && thousands <= 10) str += convertUnderThousand(thousands) + " آلاف";
+                else str += convertUnderThousand(thousands) + " ألف";
+            }
+            
+            if (remThousand > 0) {
+                if (str !== "") str += " و ";
+                str += convertUnderThousand(remThousand);
+            }
+            return str + " جنيهاً مصرياً لا غير";
+        }
+
+        async function loadStudentDashboard() {
             try {
+                const studentEmail = localStorage.getItem('userEmail');
                 const res = await fetch(API_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'getStudentDashboard', payload: { sessionToken: sessionToken } })
+                    body: JSON.stringify({ action: 'getStudentDashboard', payload: { sessionToken: sessionToken, email: studentEmail } })
                 });
                 const data = await res.json();
-                if(!data.success) { alert(data.message); return; }
-                localState = data;
-                renderUI();
-            } catch(e) { alert("Communication timeout with server ecosystem."); }
-        }
+                if (!data.success) { alert(data.message); return; }
 
-        function renderUI() {
-            document.getElementById('lblId').innerText = localState.studentInfo.id;
-            document.getElementById('lblName').innerText = localState.studentInfo.name;
-            document.getElementById('lblLevel').innerText = localState.studentInfo.level;
-            document.getElementById('lblSup').innerText = localState.studentInfo.supervisorName;
-            
-            const req = localState.currentRequest;
-            document.getElementById('lblStatus').innerText = req.status;
-            document.getElementById('lblCredits').innerText = req.totalCredits;
-            document.getElementById('lblFees').innerText = req.totalFees;
+                const student = data.studentData;
 
-            evaluateVisualTracker(req.status);
+                // ربط البيانات بالواجهة وعرض الكلية بنجاح
+                document.getElementById('lblStudentName').innerText = student.studentName;
+                document.getElementById('lblStudentID').innerText = student.studentId;
+                document.getElementById('lblStudentFaculty').innerText = student.faculty || "غير محدد"; // عرض الكلية هنا
+                document.getElementById('lblFinancialStatus').innerText = `Paid: ${student.paidAmount} / Due: ${student.remainingAmount} EGP`;
+                document.getElementById('coursesList').innerText = student.courses || "لا يوجد مقررات مسجلة حالياً";
 
-            if(req.comments) {
-                document.getElementById('advisorFeedbackBox').style.display = 'block';
-                document.getElementById('txtFeedback').innerText = req.comments;
-            } else {
-                document.getElementById('advisorFeedbackBox').style.display = 'none';
-            }
+                // بناء سجل الإيصالات والمدفوعات السابقة للطالب
+                const historyDiv = document.getElementById('studentPaymentsHistory');
+                historyDiv.innerHTML = '';
 
-            const tbody = document.querySelector('#catalogTable tbody');
-            tbody.innerHTML = '';
+                if (student.paymentsHistory && student.paymentsHistory.length > 0) {
+                    student.paymentsHistory.forEach((p, idx) => {
+                        const box = document.createElement('div');
+                        box.className = 'payment-box';
+                        box.innerHTML = `
+                            <div>
+                                <strong>قسط ${idx + 1}:</strong> تم سداد مبلغ <span style="color:#059669; font-weight:700;">${p.amount} EGP</span> 
+                                بتاريخ ${new Date(p.date).toLocaleDateString('en-GB')} [وسيلة الدفع: ${p.method}]
+                                <br><small style="color:#64748b;">رقم الإيصال: ${p.receiptNo}</small>
+                            </div>
+                            <button class="btn btn-primary" style="padding:4px 10px; font-size:12px; background:#0284c7;" 
+                                onclick="reprintStudentReceipt('${p.receiptNo}', '${student.studentName}', '${student.studentId}', '${student.faculty}', ${p.amount}, '${p.date}', '${p.method}')">
+                                🖨️ طباعة الإيصال
+                            </button>
+                        `;
+                        historyDiv.appendChild(box);
+                    });
+                } else {
+                    historyDiv.innerHTML = `<p style="color:#64748b; font-style:italic;">لا توجد مدفوعات مسجلة باسمك حتى الآن.</p>`;
+                }
 
-            const activeLock = !['Draft', 'Returned for Modification'].includes(req.status);
-            if(activeLock) {
-                document.getElementById('commitActionBtn').disabled = true;
-                document.getElementById('commitActionBtn').innerText = "Application Structure Locked";
-            } else {
-                document.getElementById('commitActionBtn').disabled = false;
-                document.getElementById('commitActionBtn').innerText = "Lock Layout & Final Submit";
-            }
-
-            localState.courses.forEach(c => {
-                const isChecked = localState.selectedCourses.includes(c.courseCode);
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>
-                        <input type="checkbox" value="${c.courseCode}" 
-                        data-ch="${c.creditHours}" data-cost="${c.feePerCredit}"
-                        ${isChecked ? 'checked' : ''} ${activeLock || (c.availableSeats <= 0 && !isChecked) ? 'disabled' : ''} 
-                        onchange="evaluateClientMetrics()">
-                    </td>
-                    <td><strong>${c.courseCode}</strong></td>
-                    <td>${c.courseName}</td>
-                    <td><span class="badge">${c.creditHours} CH</span></td>
-                    <td>${c.availableSeats} / ${c.maxSeats} Units Left</td>
-                    <td>${c.feePerCredit} EGP</td>
-                `;
-                tbody.appendChild(tr);
-            });
-            evaluateClientMetrics();
-        }
-
-        function evaluateClientMetrics() {
-            if(!localState) return;
-            if(!['Draft', 'Returned for Modification'].includes(localState.currentRequest.status)) return;
-
-            const selected = document.querySelectorAll('#catalogTable input[type="checkbox"]:checked');
-            let ch = 0; let fees = 0;
-            selected.forEach(box => {
-                ch += parseInt(box.getAttribute('data-ch'));
-                fees += parseInt(box.getAttribute('data-ch')) * parseFloat(box.getAttribute('data-cost'));
-            });
-
-            if(ch > 10) {
-                alert("Credit Threshold Exception: Framework limits prevent selection patterns expanding beyond 10 Credit Hours.");
-                event.target.checked = false;
-                evaluateClientMetrics();
-                return;
-            }
-            document.getElementById('lblCredits').innerText = ch;
-            document.getElementById('lblFees').innerText = fees;
-        }
-
-        function evaluateVisualTracker(status) {
-            document.querySelectorAll('.tracker-step').forEach(s => s.className = 'tracker-step');
-            if(status === 'Draft') document.getElementById('st-Draft').classList.add('active');
-            if(status === 'Submitted' || status === 'Under Academic Review') {
-                document.getElementById('st-Draft').classList.add('completed');
-                document.getElementById('st-Submitted').classList.add('active');
-            }
-            if(status === 'Approved by Supervisor') {
-                document.getElementById('st-Draft').classList.add('completed');
-                document.getElementById('st-Submitted').classList.add('completed');
-                document.getElementById('st-Approved').classList.add('active');
-            }
-            if(status === 'Pending Payment') {
-                document.getElementById('st-Draft').classList.add('completed');
-                document.getElementById('st-Submitted').classList.add('completed');
-                document.getElementById('st-Approved').classList.add('completed');
-                document.getElementById('st-PendingPayment').classList.add('active');
-            }
-            if(status === 'Registered Successfully' || status === 'Payment Confirmed') {
-                document.getElementById('st-Draft').classList.add('completed');
-                document.getElementById('st-Submitted').classList.add('completed');
-                document.getElementById('st-Approved').classList.add('completed');
-                document.getElementById('st-PendingPayment').classList.add('completed');
-                document.getElementById('st-Registered').classList.add('completed');
+            } catch (e) {
+                alert("Error loading student personal dashboard data.");
             }
         }
 
-        async function executeFinalFormSubmission() {
-            const boxes = document.querySelectorAll('#catalogTable input[type="checkbox"]:checked');
-            const collection = Array.from(boxes).map(b => b.value);
-            if(collection.length === 0) { alert("Selection configuration is empty."); return; }
-            if(!confirm("Lock application state and dispatch to evaluation board? This blocks frontend changes.")) return;
+        // دالة طباعة إيصال الطالب مباشرة بنفس الهيكل المعتمد للحسابات
+        function reprintStudentReceipt(receiptNo, name, id, faculty, amount, date, method) {
+            const d = new Date(date);
+            const printDate = d.toLocaleDateString('en-GB');
+            const printTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const amountText = tafqeet(Number(amount));
+            const reasonText = "رسوم جدية حجز خريف 2026-2027"; // البيان التلقائي الثابت للطالب
 
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'submitRegistration',
-                        payload: { sessionToken: sessionToken, studentId: localState.studentInfo.id, email: localStorage.getItem('userEmail'), courses: collection }
-                    })
-                });
-                const result = await response.json();
-                alert(result.message);
-                fetchStateEngine();
-            } catch(e) { alert("Data transmission error."); }
+            const receiptHTML = `
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        @page { size: A5 landscape; margin: 0; }
+                        body {
+                            margin: 0;
+                            padding: 10mm;
+                            width: 210mm;
+                            height: 148mm;
+                            box-sizing: border-box;
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            background: white;
+                        }
+                        .receipt-container { border: 2px solid #000; padding: 8px; height: 100%; box-sizing: border-box; }
+                        .receipt-inner-border { border: 1px solid #444; padding: 15px; height: 100%; box-sizing: border-box; position: relative; }
+                        .receipt-header { display: table; width: 100%; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; }
+                        .receipt-header-cell { display: table-cell; vertical-align: middle; }
+                        .receipt-box-top { border: 1px solid #000; padding: 6px 12px; border-radius: 4px; text-align: left; direction: ltr; font-family: Arial, sans-serif; font-size: 13px; }
+                        .receipt-title { text-align: center; font-size: 20px; font-weight: bold; margin: 10px 0; letter-spacing: 1px; }
+                        .receipt-row { display: table; width: 100%; margin-bottom: 12px; font-size: 15px; border-bottom: 1px dashed #aaa; padding-bottom: 4px; }
+                        .receipt-cell-inline { display: table-cell; }
+                        .receipt-amount-box { border: 2px solid #000; padding: 6px 15px; font-weight: bold; font-size: 18px; border-radius: 4px; background: #fff; float: left; direction: ltr; }
+                        .receipt-footer { display: table; width: 100%; margin-top: 25px; }
+                        .receipt-footer-cell { display: table-cell; vertical-align: bottom; width: 33.33%; }
+                        .receipt-stamp { width: 95px; height: 95px; border: 1px solid #aaa; border-radius: 50%; margin: 0 auto; text-align: center; color: #777; font-size: 11px; padding-top: 28px; box-sizing: border-box; transform: rotate(-10deg); }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt-container">
+                        <div class="receipt-inner-border">
+                            <div class="receipt-header">
+                                <div class="receipt-header-cell" style="width:35%;">
+                                    <div class="receipt-box-top">
+                                        <div style="font-weight:bold; margin-bottom:2px;">Receipt No: <span>${receiptNo}</span></div>
+                                        <div>Date: <span>${printDate}</span></div>
+                                    </div>
+                                </div>
+                                <div class="receipt-header-cell" style="width:30%; text-align:center;">
+                                    <img src="logo.png" style="height:60px;" alt="Logo" onerror="this.style.display='none'">
+                                </div>
+                                <div class="receipt-header-cell" style="width:35%; text-align:left;">
+                                    <h2 style="margin:0; font-size:22px; font-weight:bold;">جامعة شرق العاصمة</h2>
+                                    <p style="margin:0; font-size:13px; font-weight:600; color:#444;">إدارة الحسابات والخزينة</p>
+                                </div>
+                            </div>
+                            <div class="receipt-title">إيصـال اسـتلام نقديـة (CASH RECEIPT)</div>
+                            <div class="receipt-row">
+                                <div class="receipt-cell-inline" style="width:18%; font-weight:bold;">استلمنا من السيد/ة:</div>
+                                <div class="receipt-cell-inline" style="font-weight:bold; font-size:17px; text-align:right;">${name}</div>
+                            </div>
+                            <div class="receipt-row">
+                                <div class="receipt-cell-inline" style="width:50%;">
+                                    <span style="font-weight:bold;">الكلية المقيد بها:</span> 
+                                    <span style="font-weight:600;">${faculty}</span>
+                                </div>
+                                <div class="receipt-cell-inline" style="width:50%; text-align:left;">
+                                    <span style="font-weight:bold;">رقم الملف:</span> 
+                                    <span style="font-weight:bold; font-size:16px;">${id}</span>
+                                </div>
+                            </div>
+                            <div class="receipt-row" style="border-bottom:none; margin-bottom:5px;">
+                                <div class="receipt-cell-inline" style="vertical-align: middle; font-weight:bold; width:22%;">مبلغاً وقدره (بالحروف):</div>
+                                <div class="receipt-cell-inline" style="vertical-align: middle; font-weight:bold; text-align:center; font-size:14px; padding:0 5px;">${amountText}</div>
+                                <div class="receipt-cell-inline" style="width:25%;">
+                                    <div class="receipt-amount-box">EGP <span>${amount}</span></div>
+                                </div>
+                            </div>
+                            <div class="receipt-row" style="margin-top:10px;">
+                                <div class="receipt-cell-inline" style="width:12%; font-weight:bold;">وذلك قيمة:</div>
+                                <div class="receipt-cell-inline" style="font-weight:600; text-align:right;">${reasonText}</div>
+                            </div>
+                            <div class="receipt-footer">
+                                <div class="receipt-footer-cell" style="text-align:right; font-size:11px; font-family:Arial, sans-serif; line-height:1.4;">
+                                    Time: <span>${printTime}</span><br>
+                                    Payment: <span>${method}</span>
+                                </div>
+                                <div class="receipt-footer-cell">
+                                    <div class="receipt-stamp">الختم الرسمي<br>Official Stamp</div>
+                                </div>
+                                <div class="receipt-footer-cell" style="text-align:center;">
+                                    <div style="border-top:1.5px solid #000; width:85%; margin:0 auto; padding-top:4px; font-weight:bold; font-size:14px;">
+                                        توقيع المستلم<br><span style="font-size:12px; font-weight:normal;">(Cashier)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const iframe = document.getElementById('printFrame');
+            iframe.contentWindow.document.open();
+            iframe.contentWindow.document.write(receiptHTML);
+            iframe.contentWindow.document.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }, 300);
         }
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
-        window.onload = fetchStateEngine;
+        window.onload = loadStudentDashboard;
     </script>
 </body>
 </html>
