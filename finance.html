@@ -199,9 +199,11 @@
                 return;
             }
 
-            // علامة الـ BOM لضمان فتح الملف باللغة العربية داخل ملف الإكسيل بشكل سليم
+            // علامة الـ BOM لضمان فتح الملف باللغة العربية والانجليزية داخل برنامج الإكسيل بشكل سليم تماماً
             let csvContent = "\ufeff"; 
-            csvContent += "الأى دى,اسم الطالب,الكورسات اللى مسجل فيها,المبالغ المدفوعه,طريقه الدفع,تاريخ الدفع,رقم الايصال\n";
+            
+            // تم تحديث العناوين لتصبح باللغة الإنجليزية الاحترافية والمفهومة محاسبياً لعمليات التدقيق المالي ومراجعة الحسابات
+            csvContent += "Student ID,Student Name,Enrolled Courses,Amount Paid,Payment Method,Payment Date,Receipt Number\n";
 
             let rowsCount = 0;
 
@@ -209,10 +211,10 @@
                 if (r.paymentsHistory && r.paymentsHistory.length > 0) {
                     r.paymentsHistory.forEach(p => {
                         rowsCount++;
-                        // تنظيف وتجهيز نصوص البيانات لمنع تداخل الأعمدة
+                        // تنظيف وتجهيز نصوص البيانات لمنع تداخل الأعمدة وحمايتها
                         let studentId = String(r.studentId).replace(/"/g, '""');
                         let studentName = String(r.studentName).replace(/"/g, '""');
-                        let courses = String(r.courses || 'لا يوجد').replace(/"/g, '""');
+                        let courses = String(r.courses || 'None').replace(/"/g, '""');
                         let amount = p.amount;
                         let method = String(p.method).replace(/"/g, '""');
                         
@@ -234,12 +236,12 @@
                 return;
             }
 
-            // إنشاء ملف التحميل وتنزيله للمستخدم فورا
+            // إنشاء ملف التحميل وتنزيله للمركز المالي فورا بصيغة CSV المتوافقة بالكامل مع Excel
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
-            link.setAttribute("download", "تقرير_المدفوعات_المالية_" + new Date().toISOString().split('T')[0] + ".csv");
+            link.setAttribute("download", "Tuition_Payments_Report_" + new Date().toISOString().split('T')[0] + ".csv");
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
