@@ -148,10 +148,16 @@
                     if(r.paymentsHistory && r.paymentsHistory.length > 0) {
                         historyHTML = `<div style="margin-top:8px;">`;
                         r.paymentsHistory.forEach((p, index) => {
+                            // معالجة حالة الأحرف بشكل آمن لدعم مسميات الشيت المباشرة أو مسميات الكود
+                            const currentAmount = p.amount !== undefined ? p.amount : (p.AmountPaid !== undefined ? p.AmountPaid : 0);
+                            const currentDate = p.date !== undefined ? p.date : (p.PaymentDate !== undefined ? p.PaymentDate : '');
+                            const currentReceiptNo = p.receiptNo !== undefined ? p.receiptNo : (p.ReceiptNo !== undefined ? p.ReceiptNo : '');
+                            const currentMethod = p.method !== undefined ? p.method : (p.PaymentMethod !== undefined ? p.PaymentMethod : '');
+
                             historyHTML += `
                                 <div class="history-box">
-                                    <strong>Installment${index+1}:</strong> ${p.amount} EGP بتاريخ ${new Date(p.date).toLocaleDateString('en-GB')}
-                                    <button class="reprint-btn" onclick="executeDirectPrint('${p.receiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${p.amount}, '${p.date}', '${p.method}')">🖨️ Print Receipt</button>
+                                    <strong>Installment${index+1}:</strong> ${currentAmount} EGP بتاريخ ${currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : ''}
+                                    <button class="reprint-btn" onclick="executeDirectPrint('${currentReceiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${currentAmount}, '${currentDate}', '${currentMethod}')">🖨️ Print Receipt</button>
                                 </div>`;
                         });
                         historyHTML += `</div>`;
@@ -211,20 +217,27 @@
                 if (r.paymentsHistory && r.paymentsHistory.length > 0) {
                     r.paymentsHistory.forEach(p => {
                         rowsCount++;
+                        
+                        // معالجة حالة الأحرف بشكل آمن للتصدير أيضاً
+                        const currentAmount = p.amount !== undefined ? p.amount : (p.AmountPaid !== undefined ? p.AmountPaid : 0);
+                        const currentDate = p.date !== undefined ? p.date : (p.PaymentDate !== undefined ? p.PaymentDate : '');
+                        const currentReceiptNo = p.receiptNo !== undefined ? p.receiptNo : (p.ReceiptNo !== undefined ? p.ReceiptNo : '');
+                        const currentMethod = p.method !== undefined ? p.method : (p.PaymentMethod !== undefined ? p.PaymentMethod : '');
+
                         // تنظيف وتجهيز نصوص البيانات لمنع تداخل الأعمدة وحمايتها
                         let studentId = String(r.studentId).replace(/"/g, '""');
                         let studentName = String(r.studentName).replace(/"/g, '""');
                         let courses = String(r.courses || 'None').replace(/"/g, '""');
-                        let amount = p.amount;
-                        let method = String(p.method).replace(/"/g, '""');
+                        let amount = currentAmount;
+                        let method = String(currentMethod).replace(/"/g, '""');
                         
                         let formattedDate = "";
                         try {
-                            formattedDate = new Date(p.date).toLocaleDateString('en-GB');
+                            formattedDate = currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : '';
                         } catch(err) {
-                            formattedDate = p.date;
+                            formattedDate = currentDate;
                         }
-                        let receiptNo = String(p.receiptNo).replace(/"/g, '""');
+                        let receiptNo = String(currentReceiptNo).replace(/"/g, '""');
 
                         csvContent += `"${studentId}","${studentName}","${courses}",${amount},"${method}","${formattedDate}","${receiptNo}"\n`;
                     });
