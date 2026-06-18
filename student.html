@@ -30,48 +30,53 @@
         <div class="dashboard-grid">
             <div class="card">
                 <h3>Student Profile Architecture</h3>
-                <img id="studentProfileImage" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'></svg>" alt="Student Photo" style="width: 90px; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; display: block; margin-bottom: 15px; background-color: #f8fafc;" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';">
                 <p><strong>System Identification ID:</strong> <span id="lblId">---</span></p>
-                <p><strong>Academic Faculty:</strong> <span id="lblFaculty">---</span></p>
-                <p><strong>Current Active Level:</strong> <span id="lblLevel">---</span></p>
+                <p><strong>Full Name:</strong> <span id="lblName">---</span></p>
+                <p><strong>Faculty / College:</strong> <span id="lblFaculty">---</span></p>
+                <p><strong>Academic Seniority Level:</strong> <span id="lblLevel">---</span></p>
+                <p><strong>Assigned Advisor:</strong> <span id="lblSup">---</span></p>
             </div>
-            <div class="card">
-                <h3>Advising & Status Logs</h3>
-                <p><strong>Advisor Comments:</strong> <span id="lblComments" style="color:var(--danger-color);">None</span></p>
-                <p><strong>Total Program Cost:</strong> <span id="lblTotalFees">0</span> EGP</p>
+            <div class="card success">
+                <h3>Live Billing & Credit Matrix</h3>
+                <p><strong>Application Phase:</strong> <span id="lblStatus" style="font-weight:bold; color:var(--primary-color);">---</span></p>
+                <p><strong>Calculated Workload:</strong> <span id="lblCredits">0</span> / 10 Max CH</p>
+                <p><strong>Aggregated Invoiced Fees:</strong> <span id="lblFees">0</span> EGP</p>
             </div>
         </div>
 
-        <div id="courseSelectionContainer" style="display:none;">
-            <h3>Available Course Catalog Configuration</h3>
-            <table id="catalogTable">
-                <thead>
-                    <tr>
-                        <th>Select</th>
-                        <th>Code</th>
-                        <th>Course Nomenclature</th>
-                        <th>Credit Load</th>
-                        <th>Financial Cost</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <button class="btn btn-primary" onclick="executeFinalFormSubmission()">Lock & Submit Registration Form</button>
+        <div id="advisorFeedbackBox" class="card danger" style="display:none; margin-bottom: 25px;">
+            <h3>Academic Advisory Feedback & Constraints</h3>
+            <p id="txtFeedback" style="color:var(--dark-neutral); font-weight:500;"></p>
         </div>
 
-        <div id="lockedStateMessage" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; margin-top:20px; text-align:center; border:1px solid #cbd5e1;">
-            <h3 style="color:#0f172a;">Application Locked</h3>
-            <p>Your course selections have been transmitted to the system. Modifications are restricted unless returned by your academic advisor.</p>
-            <div id="selectedCoursesList" style="margin-top:15px; text-align:left; background:#fff; padding:15px; border-radius:6px; border:1px solid #e2e8f0;"></div>
+        <h3>Available Summer Program Curriculum Matrix</h3>
+        <table id="catalogTable">
+            <thead>
+                <tr>
+                    <th>Selection Trigger</th>
+                    <th>Course Code</th>
+                    <th>Course Subject Name</th>
+                    <th>Weight Structure</th>
+                    <th>Live Seat Availability</th>
+                    <th>Unit Cost</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        
+        <div style="margin-top:30px; text-align:right;">
+            <button id="commitActionBtn" class="btn btn-success" onclick="executeFinalFormSubmission()">Lock Layout & Final Submit</button>
         </div>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
         const sessionToken = localStorage.getItem('sessionToken');
-        let localState = {};
+        const userRole = localStorage.getItem('userRole');
+        let localState = null;
 
-        if (!sessionToken) { window.location.href = 'index.html'; }
+        if (!sessionToken || userRole !== 'student') { window.location.href = 'index.html'; }
+        document.getElementById('displayStudentName').innerText = localStorage.getItem('displayName');
 
         async function fetchStateEngine() {
             try {
@@ -80,96 +85,112 @@
                     body: JSON.stringify({ action: 'getStudentDashboard', payload: { sessionToken: sessionToken } })
                 });
                 const data = await res.json();
-                if(!data.success) { alert(data.message); logout(); return; }
-
+                if(!data.success) { alert(data.message); return; }
                 localState = data;
-                
-                // تحقق آمن وشامل لضمان تعبئة البيانات دون أي توقف مفاجئ
-                if (document.getElementById('displayStudentName') && data.studentInfo) {
-                    document.getElementById('displayStudentName').innerText = "Welcome, " + (data.studentInfo.name || '');
-                }
-                if (document.getElementById('lblId') && data.studentInfo) {
-                    document.getElementById('lblId').innerText = data.studentInfo.id || '---';
-                }
-                if (document.getElementById('lblFaculty') && data.studentInfo) {
-                    document.getElementById('lblFaculty').innerText = data.studentInfo.faculty || 'General';
-                }
-                if (document.getElementById('lblLevel') && data.studentInfo) {
-                    document.getElementById('lblLevel').innerText = data.studentInfo.level || '---';
-                }
-
-                if (document.getElementById('lblComments') && data.requestData) {
-                    document.getElementById('lblComments').innerText = data.requestData.comments || 'None';
-                }
-                if (document.getElementById('lblTotalFees') && data.requestData) {
-                    document.getElementById('lblTotalFees').innerText = data.requestData.totalFees || '0';
-                }
-
-                // جلب صورة الطالب بناءً على الـ ID الخاص به بشكل معزول وآمن تماماً
-                const imgComponent = document.getElementById('studentProfileImage');
-                if (imgComponent && data.studentInfo && data.studentInfo.id) {
-                    imgComponent.src = "photo/" + data.studentInfo.id + ".jpg";
-                }
-
-                if (data.requestData && data.requestData.status) {
-                    updateTracker(data.requestData.status);
-                }
-
-                if(data.requestData && (data.requestData.status === 'Draft' || data.requestData.status === 'Returned for Modification')) {
-                    if (document.getElementById('courseSelectionContainer')) document.getElementById('courseSelectionContainer').style.display = 'block';
-                    if (document.getElementById('lockedStateMessage')) document.getElementById('lockedStateMessage').style.display = 'none';
-                    
-                    const tbody = document.querySelector('#catalogTable tbody');
-                    if (tbody && data.availableCourses) {
-                        tbody.innerHTML = '';
-                        data.availableCourses.forEach(c => {
-                            const tr = document.createElement('tr');
-                            const isChecked = (data.requestData.courses || []).includes(c.CourseCode) ? 'checked' : '';
-                            tr.innerHTML = `
-                                <td><input type="checkbox" value="${c.CourseCode}" ${isChecked}></td>
-                                <td>${c.CourseCode}</td>
-                                <td>${c.CourseName}</td>
-                                <td>${c.Credits}</td>
-                                <td>${c.Fees}</td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    }
-                } else {
-                    if (document.getElementById('courseSelectionContainer')) document.getElementById('courseSelectionContainer').style.display = 'none';
-                    if (document.getElementById('lockedStateMessage')) document.getElementById('lockedStateMessage').style.display = 'block';
-                    if (document.getElementById('selectedCoursesList') && data.requestData) {
-                        document.getElementById('selectedCoursesList').innerHTML = `<strong>Registered Modules:</strong><br>` + ((data.requestData.courses || []).join(', ') || 'No modules selected');
-                    }
-                }
-            } catch (e) {
-                console.error("Synchronization Engine Failure:", e);
-                alert("System state synchronization failed.");
-            }
+                renderUI();
+            } catch(e) { alert("Communication timeout with server ecosystem."); }
         }
 
-        function updateTracker(status) {
-            document.querySelectorAll('.tracker-step').forEach(el => el.classList.remove('completed'));
+        function renderUI() {
+            document.getElementById('lblId').innerText = localState.studentInfo.id;
+            document.getElementById('lblName').innerText = localState.studentInfo.name;
+            // ربط وعرض اسم الكلية برمجياً من الخادم
+            document.getElementById('lblFaculty').innerText = localState.studentInfo.faculty || "---";
+            document.getElementById('lblLevel').innerText = localState.studentInfo.level;
+            document.getElementById('lblSup').innerText = localState.studentInfo.supervisorName;
             
-            if (status !== 'Draft') {
-                const step = document.getElementById('st-Draft');
-                if (step) step.classList.add('completed');
+            const req = localState.currentRequest;
+            document.getElementById('lblStatus').innerText = req.status;
+            document.getElementById('lblCredits').innerText = req.totalCredits;
+            document.getElementById('lblFees').innerText = req.totalFees;
+
+            evaluateVisualTracker(req.status);
+
+            if(req.comments) {
+                document.getElementById('advisorFeedbackBox').style.display = 'block';
+                document.getElementById('txtFeedback').innerText = req.comments;
+            } else {
+                document.getElementById('advisorFeedbackBox').style.display = 'none';
             }
-            if (['Submitted', 'Approved by Supervisor', 'Pending Payment', 'Partially Paid', 'Registered Successfully'].includes(status)) {
-                const step = document.getElementById('st-Submitted');
-                if (step) step.classList.add('completed');
+
+            const tbody = document.querySelector('#catalogTable tbody');
+            tbody.innerHTML = '';
+
+            const activeLock = !['Draft', 'Returned for Modification'].includes(req.status);
+            if(activeLock) {
+                document.getElementById('commitActionBtn').disabled = true;
+                document.getElementById('commitActionBtn').innerText = "Application Structure Locked";
+            } else {
+                document.getElementById('commitActionBtn').disabled = false;
+                document.getElementById('commitActionBtn').innerText = "Lock Layout & Final Submit";
             }
-            if (['Approved by Supervisor', 'Pending Payment', 'Partially Paid', 'Registered Successfully'].includes(status)) {
-                const step = document.getElementById('st-Approved');
-                if (step) step.classList.add('completed');
+
+            localState.courses.forEach(c => {
+                const isChecked = localState.selectedCourses.includes(c.courseCode);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <input type="checkbox" value="${c.courseCode}" 
+                        data-ch="${c.creditHours}" data-cost="${c.feePerCredit}"
+                        ${isChecked ? 'checked' : ''} ${activeLock || (c.availableSeats <= 0 && !isChecked) ? 'disabled' : ''} 
+                        onchange="evaluateClientMetrics()">
+                    </td>
+                    <td><strong>${c.courseCode}</strong></td>
+                    <td>${c.courseName}</td>
+                    <td><span class="badge">${c.creditHours} CH</span></td>
+                    <td>${c.availableSeats} / ${c.maxSeats} Units Left</td>
+                    <td>${c.feePerCredit} EGP</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            evaluateClientMetrics();
+        }
+
+        function evaluateClientMetrics() {
+            if(!localState) return;
+            if(!['Draft', 'Returned for Modification'].includes(localState.currentRequest.status)) return;
+
+            const selected = document.querySelectorAll('#catalogTable input[type="checkbox"]:checked');
+            let ch = 0; let fees = 0;
+            selected.forEach(box => {
+                ch += parseInt(box.getAttribute('data-ch'));
+                fees += parseInt(box.getAttribute('data-ch')) * parseFloat(box.getAttribute('data-cost'));
+            });
+
+            if(ch > 10) {
+                alert("You cannot register for more than 10 credit hours.");
+                event.target.checked = false;
+                evaluateClientMetrics();
+                return;
             }
-            if (['Pending Payment', 'Partially Paid', 'Registered Successfully'].includes(status)) {
-                const step = document.getElementById('st-PendingPayment');
-                if (step) step.classList.add('completed');
+            document.getElementById('lblCredits').innerText = ch;
+            document.getElementById('lblFees').innerText = fees;
+        }
+
+        function evaluateVisualTracker(status) {
+            document.querySelectorAll('.tracker-step').forEach(s => s.className = 'tracker-step');
+            if(status === 'Draft') document.getElementById('st-Draft').classList.add('active');
+            if(status === 'Submitted' || status === 'Under Academic Review') {
+                document.getElementById('st-Draft').classList.add('completed');
+                document.getElementById('st-Submitted').classList.add('active');
             }
-            if (status === 'Registered Successfully') {
-                const step = document.getElementById('st-Registered');
-                if (step) step.classList.add('completed');
+            if(status === 'Approved by Supervisor') {
+                document.getElementById('st-Draft').classList.add('completed');
+                document.getElementById('st-Submitted').classList.add('completed');
+                document.getElementById('st-Approved').classList.add('active');
+            }
+            if(status === 'Pending Payment') {
+                document.getElementById('st-Draft').classList.add('completed');
+                document.getElementById('st-Submitted').classList.add('completed');
+                document.getElementById('st-Approved').classList.add('completed');
+                document.getElementById('st-PendingPayment').classList.add('active');
+            }
+            if(status === 'Registered Successfully' || status === 'Payment Confirmed') {
+                document.getElementById('st-Draft').classList.add('completed');
+                document.getElementById('st-Submitted').classList.add('completed');
+                document.getElementById('st-Approved').classList.add('completed');
+                document.getElementById('st-PendingPayment').classList.add('completed');
+                document.getElementById('st-Registered').classList.add('completed');
             }
         }
 
@@ -184,7 +205,7 @@
                     method: 'POST',
                     body: JSON.stringify({
                         action: 'submitRegistration',
-                        payload: { sessionToken: sessionToken, studentId: localState.studentInfo?.id, email: localStorage.getItem('userEmail'), courses: collection }
+                        payload: { sessionToken: sessionToken, studentId: localState.studentInfo.id, email: localStorage.getItem('userEmail'), courses: collection }
                     })
                 });
                 const result = await response.json();
