@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sٍtudent Enrollment Portal</title>
+    <title>Student Enrollment Portal</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -83,47 +83,67 @@
                 if(!data.success) { alert(data.message); logout(); return; }
 
                 localState = data;
-                document.getElementById('displayStudentName').innerText = "Welcome, " + data.studentInfo.name;
-                document.getElementById('lblId').innerText = data.studentInfo.id;
-                document.getElementById('lblFaculty').innerText = data.studentInfo.faculty || 'General';
-                document.getElementById('lblLevel').innerText = data.studentInfo.level || '---';
-
-                document.getElementById('lblComments').innerText = data.requestData.comments || 'None';
-                document.getElementById('lblTotalFees').innerText = data.requestData.totalFees || '0';
-
-                try {
-                    if (data.studentInfo && data.studentInfo.id) {
-                        document.getElementById('studentProfileImage').src = "photo/" + data.studentInfo.id + ".jpg";
-                    }
-                } catch (imgErr) {
-                    console.error("Profile image assignment skipped or deferred:", imgErr);
+                
+                // تحقق آمن وشامل لضمان تعبئة البيانات دون أي توقف مفاجئ
+                if (document.getElementById('displayStudentName') && data.studentInfo) {
+                    document.getElementById('displayStudentName').innerText = "Welcome, " + (data.studentInfo.name || '');
+                }
+                if (document.getElementById('lblId') && data.studentInfo) {
+                    document.getElementById('lblId').innerText = data.studentInfo.id || '---';
+                }
+                if (document.getElementById('lblFaculty') && data.studentInfo) {
+                    document.getElementById('lblFaculty').innerText = data.studentInfo.faculty || 'General';
+                }
+                if (document.getElementById('lblLevel') && data.studentInfo) {
+                    document.getElementById('lblLevel').innerText = data.studentInfo.level || '---';
                 }
 
-                updateTracker(data.requestData.status);
+                if (document.getElementById('lblComments') && data.requestData) {
+                    document.getElementById('lblComments').innerText = data.requestData.comments || 'None';
+                }
+                if (document.getElementById('lblTotalFees') && data.requestData) {
+                    document.getElementById('lblTotalFees').innerText = data.requestData.totalFees || '0';
+                }
 
-                if(data.requestData.status === 'Draft' || data.requestData.status === 'Returned for Modification') {
-                    document.getElementById('courseSelectionContainer').style.display = 'block';
-                    document.getElementById('lockedStateMessage').style.display = 'none';
+                // جلب صورة الطالب بناءً على الـ ID الخاص به بشكل معزول وآمن تماماً
+                const imgComponent = document.getElementById('studentProfileImage');
+                if (imgComponent && data.studentInfo && data.studentInfo.id) {
+                    imgComponent.src = "photo/" + data.studentInfo.id + ".jpg";
+                }
+
+                if (data.requestData && data.requestData.status) {
+                    updateTracker(data.requestData.status);
+                }
+
+                if(data.requestData && (data.requestData.status === 'Draft' || data.requestData.status === 'Returned for Modification')) {
+                    if (document.getElementById('courseSelectionContainer')) document.getElementById('courseSelectionContainer').style.display = 'block';
+                    if (document.getElementById('lockedStateMessage')) document.getElementById('lockedStateMessage').style.display = 'none';
                     
                     const tbody = document.querySelector('#catalogTable tbody');
-                    tbody.innerHTML = '';
-                    data.availableCourses.forEach(c => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td><input type="checkbox" value="${c.CourseCode}" ${data.requestData.courses.includes(c.CourseCode) ? 'checked' : ''}></td>
-                            <td>${c.CourseCode}</td>
-                            <td>${c.CourseName}</td>
-                            <td>${c.Credits}</td>
-                            <td>${c.Fees}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+                    if (tbody && data.availableCourses) {
+                        tbody.innerHTML = '';
+                        data.availableCourses.forEach(c => {
+                            const tr = document.createElement('tr');
+                            const isChecked = (data.requestData.courses || []).includes(c.CourseCode) ? 'checked' : '';
+                            tr.innerHTML = `
+                                <td><input type="checkbox" value="${c.CourseCode}" ${isChecked}></td>
+                                <td>${c.CourseCode}</td>
+                                <td>${c.CourseName}</td>
+                                <td>${c.Credits}</td>
+                                <td>${c.Fees}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
                 } else {
-                    document.getElementById('courseSelectionContainer').style.display = 'none';
-                    document.getElementById('lockedStateMessage').style.display = 'block';
-                    document.getElementById('selectedCoursesList').innerHTML = `<strong>Registered Modules:</strong><br>` + (data.requestData.courses.join(', ') || 'No modules selected');
+                    if (document.getElementById('courseSelectionContainer')) document.getElementById('courseSelectionContainer').style.display = 'none';
+                    if (document.getElementById('lockedStateMessage')) document.getElementById('lockedStateMessage').style.display = 'block';
+                    if (document.getElementById('selectedCoursesList') && data.requestData) {
+                        document.getElementById('selectedCoursesList').innerHTML = `<strong>Registered Modules:</strong><br>` + ((data.requestData.courses || []).join(', ') || 'No modules selected');
+                    }
                 }
             } catch (e) {
+                console.error("Synchronization Engine Failure:", e);
                 alert("System state synchronization failed.");
             }
         }
@@ -132,19 +152,24 @@
             document.querySelectorAll('.tracker-step').forEach(el => el.classList.remove('completed'));
             
             if (status !== 'Draft') {
-                document.getElementById('st-Draft').classList.add('completed');
+                const step = document.getElementById('st-Draft');
+                if (step) step.classList.add('completed');
             }
             if (['Submitted', 'Approved by Supervisor', 'Pending Payment', 'Partially Paid', 'Registered Successfully'].includes(status)) {
-                document.getElementById('st-Submitted').classList.add('completed');
+                const step = document.getElementById('st-Submitted');
+                if (step) step.classList.add('completed');
             }
             if (['Approved by Supervisor', 'Pending Payment', 'Partially Paid', 'Registered Successfully'].includes(status)) {
-                document.getElementById('st-Approved').classList.add('completed');
+                const step = document.getElementById('st-Approved');
+                if (step) step.classList.add('completed');
             }
             if (['Pending Payment', 'Partially Paid', 'Registered Successfully'].includes(status)) {
-                document.getElementById('st-PendingPayment').classList.add('completed');
+                const step = document.getElementById('st-PendingPayment');
+                if (step) step.classList.add('completed');
             }
             if (status === 'Registered Successfully') {
-                document.getElementById('st-Registered').classList.add('completed');
+                const step = document.getElementById('st-Registered');
+                if (step) step.classList.add('completed');
             }
         }
 
@@ -159,7 +184,7 @@
                     method: 'POST',
                     body: JSON.stringify({
                         action: 'submitRegistration',
-                        payload: { sessionToken: sessionToken, studentId: localState.studentInfo.id, email: localStorage.getItem('userEmail'), courses: collection }
+                        payload: { sessionToken: sessionToken, studentId: localState.studentInfo?.id, email: localStorage.getItem('userEmail'), courses: collection }
                     })
                 });
                 const result = await response.json();
