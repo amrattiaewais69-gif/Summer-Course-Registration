@@ -6,29 +6,7 @@
     <title>Bursar Office Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* إعدادات الطباعة الهندسية الصارمة لضمان صفحة واحدة A5 تماماً وبدون هوامش فائضة */
-        @media print {
-            body * { visibility: hidden !important; }
-            #receiptTemplate, #receiptTemplate * { visibility: visible !important; }
-            #receiptTemplate {
-                position: fixed;
-                left: 0;
-                top: 0;
-                width: 210mm;
-                height: 148mm;
-                padding: 10mm;
-                box-sizing: border-box;
-                background: white;
-                direction: rtl;
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                page-break-inside: avoid;
-                page-break-after: avoid;
-                overflow: hidden;
-            }
-            @page { size: A5 landscape; margin: 0; }
-        }
-
-        /* تنسيق جدول تواريخ الدفع والأقساط داخل لوحة التحكم */
+        /* الحفاظ على نفس تصميم الجدول والأزرار بدون أي فقدان */
         .history-box {
             background: #f1f5f9;
             border-radius: 4px;
@@ -48,91 +26,10 @@
             margin-right: 5px;
         }
         .reprint-btn:hover { background: #0369a1; }
-
-        /* هيكل وتصميم الإيصال الفاخر المطابق للنموذج المرفق */
-        .receipt-container {
-            border: 2px solid #000;
-            padding: 8px;
-            height: 100%;
-            box-sizing: border-box;
-        }
-        .receipt-inner-border {
-            border: 1px solid #444;
-            padding: 15px;
-            height: 100%;
-            box-sizing: border-box;
-            position: relative;
-        }
-        .receipt-header {
-            display: table;
-            width: 100%;
-            border-bottom: 2px solid #000;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
-        }
-        .receipt-header-cell {
-            display: table-cell;
-            vertical-align: middle;
-        }
-        .receipt-box-top {
-            border: 1px solid #000;
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-align: left;
-            direction: ltr;
-            font-family: Arial, sans-serif;
-            font-size: 13px;
-        }
-        .receipt-title {
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            margin: 10px 0;
-            letter-spacing: 1px;
-        }
-        .receipt-row {
-            display: table;
-            width: 100%;
-            margin-bottom: 12px;
-            font-size: 15px;
-            border-bottom: 1px dashed #aaa;
-            padding-bottom: 4px;
-        }
-        .receipt-cell-inline {
-            display: table-cell;
-        }
-        .receipt-amount-box {
-            border: 2px solid #000;
-            padding: 6px 15px;
-            font-weight: bold;
-            font-size: 18px;
-            border-radius: 4px;
-            background: #fff;
-            float: left;
-            direction: ltr;
-        }
-        .receipt-footer {
-            display: table;
-            width: 100%;
-            margin-top: 25px;
-        }
-        .receipt-footer-cell {
-            display: table-cell;
-            vertical-align: bottom;
-            width: 33.33%;
-        }
-        .receipt-stamp {
-            width: 95px;
-            height: 95px;
-            border: 1px solid #aaa;
-            border-radius: 50%;
-            margin: 0 auto;
-            text-align: center;
-            color: #777;
-            font-size: 11px;
-            padding-top: 28px;
-            box-sizing: border-box;
-            transform: rotate(-10deg);
+        
+        /* إخفاء إطار الطباعة من العرض المرئي */
+        #printFrame {
+            display: none;
         }
     </style>
 </head>
@@ -169,77 +66,7 @@
         </table>
     </div>
 
-    <div id="receiptTemplate" style="display:none;">
-        <div class="receipt-container">
-            <div class="receipt-inner-border">
-                
-                <div class="receipt-header">
-                    <div class="receipt-header-cell" style="width:35%;">
-                        <div class="receipt-box-top">
-                            <div style="font-weight:bold; margin-bottom:2px;">Receipt No: <span id="p-receiptNo">---</span></div>
-                            <div>Date: <span id="p-date">---</span></div>
-                        </div>
-                    </div>
-                    <div class="receipt-header-cell" style="width:30%; text-align:center;">
-                        <div style="font-weight: 800; font-size: 16px; border: 1px solid #000; padding: 4px; display: inline-block;">UNIVERSITY of EAST CAPITAL</div>
-                    </div>
-                    <div class="receipt-header-cell" style="width:35%; text-align:left;">
-                        <h2 style="margin:0; font-size:22px; font-weight:bold;">جامعة شرق العاصمة</h2>
-                        <p style="margin:0; font-size:13px; font-weight:600; color:#444;">إدارة الحسابات والخزينة</p>
-                    </div>
-                </div>
-
-                <div class="receipt-title">إيصـال اسـتلام نقديـة (CASH RECEIPT)</div>
-
-                <div class="receipt-row">
-                    <div class="receipt-cell-inline" style="width:18%; font-weight:bold;">استلمنا من السيد/ة:</div>
-                    <div class="receipt-cell-inline" id="p-name" style="font-weight:bold; font-size:17px; text-align:right;">---</div>
-                </div>
-                
-                <div class="receipt-row">
-                    <div class="receipt-cell-inline" style="width:50%;">
-                        <span style="font-weight:bold;">الكلية المقيد بها:</span> 
-                        <span id="p-faculty" style="font-weight:600;">---</span>
-                    </div>
-                    <div class="receipt-cell-inline" style="width:50%; text-align:left;">
-                        <span style="font-weight:bold;">رقم الملف:</span> 
-                        <span id="p-id" style="font-weight:bold; font-size:16px;">---</span>
-                    </div>
-                </div>
-
-                <div class="receipt-row" style="border-bottom:none; margin-bottom:5px;">
-                    <div class="receipt-cell-inline" style="vertical-align: middle; font-weight:bold; width:22%;">مبلغاً وقدره (بالحروف):</div>
-                    <div class="receipt-cell-inline" id="p-textAmount" style="vertical-align: middle; font-weight:bold; text-align:center; font-size:14px; padding:0 5px;">---</div>
-                    <div class="receipt-cell-inline" style="width:25%;">
-                        <div class="receipt-amount-box">EGP <span id="p-numAmount">0</span></div>
-                    </div>
-                </div>
-
-                <div class="receipt-row" style="margin-top:10px;">
-                    <div class="receipt-cell-inline" style="width:12%; font-weight:bold;">وذلك قيمة:</div>
-                    <div class="receipt-cell-inline" id="p-reason" style="font-weight:600; text-align:right;">---</div>
-                </div>
-
-                <div class="receipt-footer">
-                    <div class="receipt-footer-cell" style="text-align:right; font-size:11px; font-family:Arial, sans-serif; line-height:1.4;">
-                        Time: <span id="p-time">---</span><br>
-                        Payment: <span id="p-method">---</span>
-                    </div>
-                    <div class="receipt-footer-cell">
-                        <div class="receipt-stamp">
-                            الختم الرسمي<br>Official Stamp
-                        </div>
-                    </div>
-                    <div class="receipt-footer-cell" style="text-align:center;">
-                        <div style="border-top:1.5px solid #000; width:85%; margin:0 auto; padding-top:4px; font-weight:bold; font-size:14px;">
-                            توقيع المستلم<br><span style="font-size:12px; font-weight:normal;">(Cashier)</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
+    <iframe id="printFrame"></iframe>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
@@ -249,7 +76,6 @@
         if (!sessionToken || userRole !== 'finance') { window.location.href = 'index.html'; }
         document.getElementById('financeUserLabel').innerText = "Desk Operator: " + localStorage.getItem('displayName');
 
-        // محرك التفقيط العربي الاحترافي لتحويل أرقام الأقساط إلى حروف عربية بشكل فوري
         function tafqeet(num) {
             if(num === 0) return "صفر";
             const ones = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
@@ -312,8 +138,8 @@
                     const tr = document.createElement('tr');
                     const reconciled = r.remainingAmount <= 0;
                     const todayStr = new Date().toISOString().split('T')[0];
+                    const isSecondInstallment = (r.paymentsHistory && r.paymentsHistory.length === 1);
 
-                    // بناء سجل الأقساط المدفوعة سابقاً مع زر طباعة منفصل ومستقل لكل قسط
                     let historyHTML = "";
                     if(r.paymentsHistory && r.paymentsHistory.length > 0) {
                         historyHTML = `<div style="margin-top:8px;">`;
@@ -326,6 +152,9 @@
                         });
                         historyHTML += `</div>`;
                     }
+
+                    // إجبار واجهة القسط الثاني على سحب الباقي تماماً وغلق خانة التعديل
+                    let amountFieldHTML = `<input type="number" id="amt-${r.requestId}" value="${r.remainingAmount}" max="${r.remainingAmount}" min="1" ${reconciled ? 'disabled' : ''} ${isSecondInstallment ? 'readonly title="القسط الأخير يجب أن يكون مطابقاً للمبلغ المتبقي"' : ''} placeholder="Amt to Pay" style="margin:0 0 8px 0; padding:6px; font-size:13px; ${isSecondInstallment ? 'background-color:#e2e8f0;' : ''}">`;
 
                     tr.innerHTML = `
                         <td><strong>${r.studentName}</strong><br><small style="color:#64748b;">ID: ${r.studentId} | الكلية: ${r.faculty}</small></td>
@@ -345,7 +174,7 @@
                             <input type="date" id="date-${r.requestId}" value="${todayStr}" ${reconciled ? 'disabled' : ''} style="margin:0; padding:6px; font-size:13px;">
                         </td>
                         <td>
-                            <input type="number" id="amt-${r.requestId}" value="${r.remainingAmount}" max="${r.remainingAmount}" min="1" ${reconciled ? 'disabled' : ''} placeholder="Amt to Pay" style="margin:0 0 8px 0; padding:6px; font-size:13px;">
+                            ${amountFieldHTML}
                             <input type="text" id="tx-${r.requestId}" ${reconciled ? 'disabled' : ''} placeholder="Ref No. (Optional)" style="margin:0; padding:6px; font-size:13px;">
                         </td>
                         <td>
@@ -382,7 +211,6 @@
                         payload: { 
                             sessionToken: sessionToken, 
                             requestId: reqId, 
-                            isPaid: true, 
                             amountToPay: payAmt,
                             refNum: txToken,
                             paymentMethod: payMethod,
@@ -394,7 +222,6 @@
                 const out = await res.json();
                 
                 if(out.success) {
-                    // تشغيل أمر الطباعة المباشر للفاتورة فور إنشائها بنجاح
                     executeDirectPrint(out.receiptNo, stuName, stuId, faculty, payAmt, payDate, payMethod);
                     pullLedger();
                 } else {
@@ -409,31 +236,190 @@
             }
         }
 
-        // دالة الطباعة المستقلة والمنفصلة تماماً (تسمح بإعادة طباعة الإيصال كذا مرة لأي قسط)
+        // دالة الطباعة عبر الـ Iframe لمنع التداخل أو تكرار الصفحات تماماً
         function executeDirectPrint(receiptNo, name, id, faculty, amount, date, method) {
             const reasonText = document.getElementById('receiptReasonText').value;
-            
-            document.getElementById('receiptTemplate').style.display = 'block';
-            document.getElementById('p-receiptNo').innerText = receiptNo;
-            
             const d = new Date(date);
-            document.getElementById('p-date').innerText = d.toLocaleDateString('en-GB');
-            document.getElementById('p-time').innerText = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            
-            document.getElementById('p-name').innerText = name;
-            document.getElementById('p-faculty').innerText = faculty;
-            document.getElementById('p-id').innerText = id;
-            
-            document.getElementById('p-numAmount').innerText = amount;
-            document.getElementById('p-textAmount').innerText = tafqeet(Number(amount));
-            document.getElementById('p-reason').innerText = reasonText;
-            document.getElementById('p-method').innerText = method;
+            const printDate = d.toLocaleDateString('en-GB');
+            const printTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const amountText = tafqeet(Number(amount));
 
-            // إرسال الإيصال لمهيئ الطباعة بالمتصفح
-            window.print();
-            
-            // إعادة إخفاء القالب لحماية واجهة لوحة التحكم
-            document.getElementById('receiptTemplate').style.display = 'none';
+            const receiptHTML = `
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        @page { size: A5 landscape; margin: 0; }
+                        body {
+                            margin: 0;
+                            padding: 10mm;
+                            width: 210mm;
+                            height: 148mm;
+                            box-sizing: border-box;
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            background: white;
+                        }
+                        .receipt-container {
+                            border: 2px solid #000;
+                            padding: 8px;
+                            height: 100%;
+                            box-sizing: border-box;
+                        }
+                        .receipt-inner-border {
+                            border: 1px solid #444;
+                            padding: 15px;
+                            height: 100%;
+                            box-sizing: border-box;
+                            position: relative;
+                        }
+                        .receipt-header {
+                            display: table;
+                            width: 100%;
+                            border-bottom: 2px solid #000;
+                            padding-bottom: 8px;
+                            margin-bottom: 12px;
+                        }
+                        .receipt-header-cell {
+                            display: table-cell;
+                            vertical-align: middle;
+                        }
+                        .receipt-box-top {
+                            border: 1px solid #000;
+                            padding: 6px 12px;
+                            border-radius: 4px;
+                            text-align: left;
+                            direction: ltr;
+                            font-family: Arial, sans-serif;
+                            font-size: 13px;
+                        }
+                        .receipt-title {
+                            text-align: center;
+                            font-size: 20px;
+                            font-weight: bold;
+                            margin: 10px 0;
+                            letter-spacing: 1px;
+                        }
+                        .receipt-row {
+                            display: table;
+                            width: 100%;
+                            margin-bottom: 12px;
+                            font-size: 15px;
+                            border-bottom: 1px dashed #aaa;
+                            padding-bottom: 4px;
+                        }
+                        .receipt-cell-inline {
+                            display: table-cell;
+                        }
+                        .receipt-amount-box {
+                            border: 2px solid #000;
+                            padding: 6px 15px;
+                            font-weight: bold;
+                            font-size: 18px;
+                            border-radius: 4px;
+                            background: #fff;
+                            float: left;
+                            direction: ltr;
+                        }
+                        .receipt-footer {
+                            display: table;
+                            width: 100%;
+                            margin-top: 25px;
+                        }
+                        .receipt-footer-cell {
+                            display: table-cell;
+                            vertical-align: bottom;
+                            width: 33.33%;
+                        }
+                        .receipt-stamp {
+                            width: 95px;
+                            height: 95px;
+                            border: 1px solid #aaa;
+                            border-radius: 50%;
+                            margin: 0 auto;
+                            text-align: center;
+                            color: #777;
+                            font-size: 11px;
+                            padding-top: 28px;
+                            box-sizing: border-box;
+                            transform: rotate(-10deg);
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt-container">
+                        <div class="receipt-inner-border">
+                            <div class="receipt-header">
+                                <div class="receipt-header-cell" style="width:35%;">
+                                    <div class="receipt-box-top">
+                                        <div style="font-weight:bold; margin-bottom:2px;">Receipt No: <span>${receiptNo}</span></div>
+                                        <div>Date: <span>${printDate}</span></div>
+                                    </div>
+                                </div>
+                                <div class="receipt-header-cell" style="width:30%; text-align:center;">
+                                    <div style="font-weight: 800; font-size: 16px; border: 1px solid #000; padding: 4px; display: inline-block;">UNIVERSITY of EAST CAPITAL</div>
+                                </div>
+                                <div class="receipt-header-cell" style="width:35%; text-align:left;">
+                                    <h2 style="margin:0; font-size:22px; font-weight:bold;">جامعة شرق العاصمة</h2>
+                                    <p style="margin:0; font-size:13px; font-weight:600; color:#444;">إدارة الحسابات والخزينة</p>
+                                </div>
+                            </div>
+                            <div class="receipt-title">إيصـال اسـتلام نقديـة (CASH RECEIPT)</div>
+                            <div class="receipt-row">
+                                <div class="receipt-cell-inline" style="width:18%; font-weight:bold;">استلمنا من السيد/ة:</div>
+                                <div class="receipt-cell-inline" style="font-weight:bold; font-size:17px; text-align:right;">${name}</div>
+                            </div>
+                            <div class="receipt-row">
+                                <div class="receipt-cell-inline" style="width:50%;">
+                                    <span style="font-weight:bold;">الكلية المقيد بها:</span> 
+                                    <span style="font-weight:600;">${faculty}</span>
+                                </div>
+                                <div class="receipt-cell-inline" style="width:50%; text-align:left;">
+                                    <span style="font-weight:bold;">رقم الملف:</span> 
+                                    <span style="font-weight:bold; font-size:16px;">${id}</span>
+                                </div>
+                            </div>
+                            <div class="receipt-row" style="border-bottom:none; margin-bottom:5px;">
+                                <div class="receipt-cell-inline" style="vertical-align: middle; font-weight:bold; width:22%;">مبلغاً وقدره (بالحروف):</div>
+                                <div class="receipt-cell-inline" style="vertical-align: middle; font-weight:bold; text-align:center; font-size:14px; padding:0 5px;">${amountText}</div>
+                                <div class="receipt-cell-inline" style="width:25%;">
+                                    <div class="receipt-amount-box">EGP <span>${amount}</span></div>
+                                </div>
+                            </div>
+                            <div class="receipt-row" style="margin-top:10px;">
+                                <div class="receipt-cell-inline" style="width:12%; font-weight:bold;">وذلك قيمة:</div>
+                                <div class="receipt-cell-inline" style="font-weight:600; text-align:right;">${reasonText}</div>
+                            </div>
+                            <div class="receipt-footer">
+                                <div class="receipt-footer-cell" style="text-align:right; font-size:11px; font-family:Arial, sans-serif; line-height:1.4;">
+                                    Time: <span>${printTime}</span><br>
+                                    Payment: <span>${method}</span>
+                                </div>
+                                <div class="receipt-footer-cell">
+                                    <div class="receipt-stamp">الختم الرسمي<br>Official Stamp</div>
+                                </div>
+                                <div class="receipt-footer-cell" style="text-align:center;">
+                                    <div style="border-top:1.5px solid #000; width:85%; margin:0 auto; padding-top:4px; font-weight:bold; font-size:14px;">
+                                        توقيع المستلم<br><span style="font-size:12px; font-weight:normal;">(Cashier)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const iframe = document.getElementById('printFrame');
+            iframe.contentWindow.document.open();
+            iframe.contentWindow.document.write(receiptHTML);
+            iframe.contentWindow.document.close();
+
+            // إعطاء وقت قصير للإطار لمعالجة الـ CSS ثم إطلاق أمر الطباعة
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }, 300);
         }
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
