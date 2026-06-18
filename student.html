@@ -31,14 +31,18 @@
             <div class="card">
                 <h3>Student Profile Architecture</h3>
                 
-                <div style="text-align: center; margin-bottom: 15px;">
-                    <img id="studentPhoto" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'></svg>" alt="Student Photo" style="width: 100px; height: 125px; border-radius: 6px; object-fit: cover; border: 2px solid #e2e8f0; background-color: #f8fafc;" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="flex-shrink: 0;">
+                        <img id="studentPhoto" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'></svg>" alt="Student Photo" style="width: 100px; height: 125px; border-radius: 6px; object-fit: cover; border: 2px solid #e2e8f0; background-color: #f8fafc;" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';">
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <p><strong>System Identification ID:</strong> <span id="lblId">---</span></p>
+                        <p><strong>Full Name:</strong> <span id="lblName">---</span></p>
+                        <p><strong>Faculty / College:</strong> <span id="lblFaculty">---</span></p>
+                        <p><strong>Academic Seniority Level:</strong> <span id="lblLevel">---</span></p>
+                        <p><strong>Assigned Advisor:</strong> <span id="lblSup">---</span></p>
+                    </div>
                 </div>
-                <p><strong>System Identification ID:</strong> <span id="lblId">---</span></p>
-                <p><strong>Full Name:</strong> <span id="lblName">---</span></p>
-                <p><strong>Faculty / College:</strong> <span id="lblFaculty">---</span></p>
-                <p><strong>Academic Seniority Level:</strong> <span id="lblLevel">---</span></p>
-                <p><strong>Assigned Advisor:</strong> <span id="lblSup">---</span></p>
             </div>
             <div class="card success">
                 <h3>Live Billing & Credit Matrix</h3>
