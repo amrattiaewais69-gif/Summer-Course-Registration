@@ -32,7 +32,7 @@
 <body>
     <div class="navbar">
         <div class="nav-brand">
-            <h2>Student Accounts Ledger Desk</h2>
+            <h2>Student Financial Services</h2>
         </div>
         <div>
             <span id="financeUserLabel" style="margin-right:20px; font-weight:600;"></span>
@@ -150,8 +150,8 @@
                         r.paymentsHistory.forEach((p, index) => {
                             historyHTML += `
                                 <div class="history-box">
-                                    <strong>قسط ${index+1}:</strong> ${p.amount} EGP بتاريخ ${new Date(p.date).toLocaleDateString('en-GB')}
-                                    <button class="reprint-btn" onclick="executeDirectPrint('${p.receiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${p.amount}, '${p.date}', '${p.method}')">🖨️ طباعة هذا الإيصال</button>
+                                    <strong>Installment ${index+1}:</strong> ${p.amount} EGP بتاريخ ${new Date(p.date).toLocaleDateString('en-GB')}
+                                    <button class="reprint-btn" onclick="executeDirectPrint('${p.receiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${p.amount}, '${p.date}', '${p.method}')">🖨️ Print Receipt</button>
                                 </div>`;
                         });
                         historyHTML += `</div>`;
@@ -183,7 +183,7 @@
                         <td>
                             ${reconciled ? `<span style="color:var(--success-color); font-weight:600; font-size:13px;">Fully Reconciled ✓</span>` : `
                                 <div style="display:flex; flex-direction:column; gap:5px;">
-                                    <button class="btn btn-success" style="padding:6px; font-size:12px;" onclick="commitPaymentAndPrint('${r.requestId}', '${r.studentName}', '${r.studentId}', '${r.faculty}')">تأكيد الدفع وطباعة الإيصال</button>
+                                    <button class="btn btn-success" style="padding:6px; font-size:12px;" onclick="commitPaymentAndPrint('${r.requestId}', '${r.studentName}', '${r.studentId}', '${r.faculty}')">Confirm Payment & Print Receipt</button>
                                 </div>
                             `}
                         </td>
