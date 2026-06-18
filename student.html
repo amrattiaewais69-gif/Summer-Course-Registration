@@ -158,7 +158,7 @@
             });
 
             if(ch > 10) {
-                alert("Credit Threshold Exception: Framework limits prevent selection patterns expanding beyond 10 Credit Hours.");
+                alert("You cannot register for more than 10 credit hours.");
                 event.target.checked = false;
                 evaluateClientMetrics();
                 return;
@@ -197,8 +197,8 @@
         async function executeFinalFormSubmission() {
             const boxes = document.querySelectorAll('#catalogTable input[type="checkbox"]:checked');
             const collection = Array.from(boxes).map(b => b.value);
-            if(collection.length === 0) { alert("Selection configuration is empty."); return; }
-            if(!confirm("Lock application state and dispatch to evaluation board? This blocks frontend changes.")) return;
+            if(collection.length === 0) { alert("Please select at least one course before submitting your request."); return; }
+            if(!confirm("Once submitted, your course selection will be sent for academic approval and cannot be modified unless returned by your Academic Advisor.")) return;
 
             try {
                 const response = await fetch(API_URL, {
