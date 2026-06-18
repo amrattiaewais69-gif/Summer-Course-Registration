@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Enrollment Portal</title>
+    <title>Sٍtudent Enrollment Portal</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -29,15 +29,11 @@
 
         <div class="dashboard-grid">
             <div class="card">
-                <div style="display: flex; align-items: flex-start; gap: 20px;">
-                    <img id="studentProfileImage" src="" alt="Student Photo" style="width: 90px; height: 110px; border-radius: 6px; object-fit: cover; border: 2px solid #e2e8f0; background-color: #f8fafc;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
-                    <div>
-                        <h3 style="margin-top: 0; margin-bottom: 12px;">Student Profile Architecture</h3>
-                        <p><strong>System Identification ID:</strong> <span id="lblId">---</span></p>
-                        <p><strong>Academic Faculty:</strong> <span id="lblFaculty">---</span></p>
-                        <p><strong>Current Active Level:</strong> <span id="lblLevel">---</span></p>
-                    </div>
-                </div>
+                <h3>Student Profile Architecture</h3>
+                <img id="studentProfileImage" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'></svg>" alt="Student Photo" style="width: 90px; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; display: block; margin-bottom: 15px; background-color: #f8fafc;" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';">
+                <p><strong>System Identification ID:</strong> <span id="lblId">---</span></p>
+                <p><strong>Academic Faculty:</strong> <span id="lblFaculty">---</span></p>
+                <p><strong>Current Active Level:</strong> <span id="lblLevel">---</span></p>
             </div>
             <div class="card">
                 <h3>Advising & Status Logs</h3>
@@ -91,12 +87,17 @@
                 document.getElementById('lblId').innerText = data.studentInfo.id;
                 document.getElementById('lblFaculty').innerText = data.studentInfo.faculty || 'General';
                 document.getElementById('lblLevel').innerText = data.studentInfo.level || '---';
-                
-                // ربط صورة الطالب بناءً على المجلد الفرعي photo والـ ID الخاص به
-                document.getElementById('studentProfileImage').src = "photo/" + data.studentInfo.id + ".jpg";
 
                 document.getElementById('lblComments').innerText = data.requestData.comments || 'None';
                 document.getElementById('lblTotalFees').innerText = data.requestData.totalFees || '0';
+
+                try {
+                    if (data.studentInfo && data.studentInfo.id) {
+                        document.getElementById('studentProfileImage').src = "photo/" + data.studentInfo.id + ".jpg";
+                    }
+                } catch (imgErr) {
+                    console.error("Profile image assignment skipped or deferred:", imgErr);
+                }
 
                 updateTracker(data.requestData.status);
 
@@ -150,12 +151,7 @@
         async function executeFinalFormSubmission() {
             const boxes = document.querySelectorAll('#catalogTable input[type="checkbox"]:checked');
             const collection = Array.from(boxes).map(b => b.value);
-            
-            if(collection.length === 0) { 
-                alert("Please select at least one course before submitting your request."); 
-                return; 
-            }
-            
+            if(collection.length === 0) { alert("Please select at least one course before submitting your request."); return; }
             if(!confirm("Once submitted, your course selection will be sent for academic approval and cannot be modified unless returned by your Academic Advisor.")) return;
 
             try {
@@ -163,27 +159,16 @@
                     method: 'POST',
                     body: JSON.stringify({
                         action: 'submitRegistration',
-                        payload: { 
-                            sessionToken: sessionToken, 
-                            studentId: localState.studentInfo.id, 
-                            email: localStorage.getItem('userEmail'), 
-                            courses: collection 
-                        }
+                        payload: { sessionToken: sessionToken, studentId: localState.studentInfo.id, email: localStorage.getItem('userEmail'), courses: collection }
                     })
                 });
                 const result = await response.json();
                 alert(result.message);
                 fetchStateEngine();
-            } catch(e) { 
-                alert("Data transmission error."); 
-            }
+            } catch(e) { alert("Data transmission error."); }
         }
 
-        function logout() { 
-            localStorage.clear(); 
-            window.location.href = 'index.html'; 
-        }
-        
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
         window.onload = fetchStateEngine;
     </script>
 </body>
