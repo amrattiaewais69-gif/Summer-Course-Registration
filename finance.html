@@ -150,7 +150,7 @@
                         r.paymentsHistory.forEach((p, index) => {
                             historyHTML += `
                                 <div class="history-box">
-                                    <strong>قسط ${index+1}:</strong> ${p.amount} EGP بتاريخ ${new Date(p.date).toLocaleDateString('en-GB')}
+                                    <strong>Installment${index+1}:</strong> ${p.amount} EGP بتاريخ ${new Date(p.date).toLocaleDateString('en-GB')}
                                     <button class="reprint-btn" onclick="executeDirectPrint('${p.receiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${p.amount}, '${p.date}', '${p.method}')">🖨️ Print Receipt</button>
                                 </div>`;
                         });
