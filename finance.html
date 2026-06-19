@@ -25,14 +25,14 @@
             margin-right: 5px;
         }
         .reprint-btn:hover { background: #0369a1; }
-        
         #printFrame { display: none; }
     </style>
 </head>
 <body>
     <div class="navbar">
         <div class="nav-brand">
-            <h2>Student Financial Services</h2>
+            <img src="logo.png" class="uni-logo-nav" alt="University Logo">
+            <h2>Student Financial Services & Treasury Workspace</h2>
         </div>
         <div>
             <span id="financeUserLabel" style="margin-right:20px; font-weight:600;"></span>
@@ -41,366 +41,158 @@
     </div>
 
     <div class="container">
-        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
-            <label style="font-weight:600; font-size:14px; color:#1e293b;">تعديل نص سبب الدفع (البيان المطبوع بالإيصال):</label>
-            <input type="text" id="receiptReasonText" value="رسوم تسجيل الفصل الصيفى 2025-2026" style="width:100%; max-width:500px; display:block; margin-top:5px; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
-        </div>
+        <h3>Tuition Billing & Revenue Clearing Operations</h3>
+        <p style="color:#64748b; margin-bottom:25px;">Process student summer collection profiles. Only academic student layouts verified by their academic advisors populate inside this treasury clearing pipeline ledger grid.</p>
 
-        <div style="margin-bottom: 20px; text-align: left;">
-            <button class="btn btn-success" style="background-color: #16a34a; padding: 8px 16px; font-weight: 600; font-size: 13px;" onclick="exportToExcel()"> Export Paid Students List </button>
-        </div>
-
-        <h3>Tuition Clearing Pipeline (Max 2 Installments Enforced)</h3>
-        
-        <table id="ledgerTable">
+        <table id="financeTable">
             <thead>
                 <tr>
-                    <th>Student Profile</th>
-                    <th>Financial Status</th>
-                    <th>Payment Method & Date</th>
-                    <th>Amount to Pay & Ref</th>
-                    <th>Accounting Controls</th>
+                    <th>Student Core Specs</th>
+                    <th>Approved Course Array</th>
+                    <th>Calculated Tuition Liability</th>
+                    <th>Status</th>
+                    <th>Collection Clearing Controls</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+                <tr><td colspan="5" style="text-align:center; color:#64748b; padding:20px;">Extracting transaction billing ledger parameters...</td></tr>
+            </tbody>
         </table>
     </div>
 
     <iframe id="printFrame"></iframe>
 
     <script>
-        // ⚠️ يرجى التأكد من كتابة رابط النشر (Web App URL) الخاص بك هنا بعد الحفظ والـ Deploy
         const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
         const sessionToken = localStorage.getItem('sessionToken');
-        const userRole = localStorage.getItem('userRole');
+        
+        if(!sessionToken) { window.location.href = 'index.html'; }
 
-        let globalRequestsData = []; // كاش محلي لحفظ البيانات المجلوبة للتصدير الفوري
-
-        if (!sessionToken || userRole !== 'finance') { window.location.href = 'index.html'; }
-        document.getElementById('financeUserLabel').innerText = "Desk Operator: " + localStorage.getItem('displayName');
-
-        function tafqeet(num) {
-            if(num === 0) return "صفر";
-            const ones = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
-            const tens = ["", "عشرة", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
-            const hundreds = ["", "مائة", "مائتان", "ثلاثمائة", "أربعمائة", "خمسمائة", "ستمائة", "سبعون", "ثمانمائة", "تسعمائة"];
-            
-            function convertUnderThousand(n) {
-                let text = "";
-                let h = Math.floor(n / 100);
-                let rem = n % 100;
-                let t = Math.floor(rem / 10);
-                let o = rem % 10;
-                
-                if (h > 0) text += hundreds[h];
-                if (rem > 0) {
-                    if (text !== "") text += " و ";
-                    if (rem === 11) text += "أحد عشر";
-                    else if (rem === 12) text += "اثنا عشر";
-                    else if (rem < 10) text += ones[o];
-                    else if (rem < 20) text += ones[o] + " عشر";
-                    else {
-                        if (o > 0) text += ones[o] + " و ";
-                        text += tens[t];
-                    }
-                }
-                return text;
-            }
-
-            let str = "";
-            let thousands = Math.floor(num / 1000);
-            let remThousand = num % 1000;
-
-            if (thousands > 0) {
-                if(thousands === 1) str += "ألف";
-                else if(thousands === 2) str += "ألفان";
-                else if(thousands >= 3 && thousands <= 10) str += convertUnderThousand(thousands) + " آلاف";
-                else str += convertUnderThousand(thousands) + " ألف";
-            }
-            
-            if (remThousand > 0) {
-                if (str !== "") str += " و ";
-                str += convertUnderThousand(remThousand);
-            }
-            return str + " جنيهاً مصرياً لا غير";
+        function getStatusClass(status) {
+            if(status === 'Registered Successfully') return 'success';
+            return 'warning';
         }
 
         async function pullLedger() {
             try {
-                const res = await fetch(API_URL, {
+                document.getElementById('financeUserLabel').innerText = localStorage.getItem('displayName') || "Cashier Desk";
+                
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: 'getFinanceDashboard', payload: { sessionToken: sessionToken } })
                 });
-                const data = await res.json();
-                if (!data.success) { alert(data.message); return; }
+                const result = await response.json();
+                
+                if(!result.success) { alert(result.message); return; }
 
-                globalRequestsData = data.requests; // تخزين البيانات فور ورودها لنجاح عملية التصدير
-
-                const tbody = document.querySelector('#ledgerTable tbody');
+                const tbody = document.querySelector('#financeTable tbody');
                 tbody.innerHTML = '';
 
-                data.requests.forEach(r => {
+                if(result.requests.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:25px; color:#64748b;">No active billing records awaiting financial collection procedures.</td></tr>`;
+                    return;
+                }
+
+                result.requests.forEach(req => {
                     const tr = document.createElement('tr');
-                    const reconciled = r.remainingAmount <= 0;
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    
-                    let historyHTML = "";
-                    if(r.paymentsHistory && r.paymentsHistory.length > 0) {
-                        historyHTML = `<div style="margin-top:8px;">`;
-                        r.paymentsHistory.forEach((p, index) => {
-                            // معالجة حالة الأحرف بشكل آمن لدعم مسميات الشيت المباشرة أو مسميات الكود
-                            const currentAmount = p.amount !== undefined ? p.amount : (p.AmountPaid !== undefined ? p.AmountPaid : 0);
-                            const currentDate = p.date !== undefined ? p.date : (p.PaymentDate !== undefined ? p.PaymentDate : '');
-                            const currentReceiptNo = p.receiptNo !== undefined ? p.receiptNo : (p.ReceiptNo !== undefined ? p.ReceiptNo : '');
-                            const currentMethod = p.method !== undefined ? p.method : (p.PaymentMethod !== undefined ? p.PaymentMethod : '');
-
-                            historyHTML += `
-                                <div class="history-box">
-                                    <strong>Installment${index+1}:</strong> ${currentAmount} EGP بتاريخ ${currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : ''}
-                                    <button class="reprint-btn" onclick="executeDirectPrint('${currentReceiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${currentAmount}, '${currentDate}', '${currentMethod}')">🖨️ Print Receipt</button>
-                                </div>`;
-                        });
-                        historyHTML += `</div>`;
-                    }
-
-                    let amountFieldHTML = `<input type="number" id="amt-${r.requestId}" value="${r.remainingAmount}" max="${r.remainingAmount}" min="1" ${reconciled ? 'disabled' : ''} placeholder="Amt to Pay" style="margin:0 0 8px 0; padding:6px; font-size:13px;">`;
+                    const isPaid = req.status === 'Registered Successfully';
 
                     tr.innerHTML = `
-                        <td><strong>${r.studentName}</strong><br><small style="color:#64748b;">ID: ${r.studentId} | الكلية: ${r.faculty}</small></td>
                         <td>
-                            <div style="font-weight:700; color:#0f172a;">Total: ${r.totalFees} EGP</div>
-                            <div style="font-size:12px; color:var(--success-color);">Paid: ${r.paidAmount} EGP</div>
-                            <div style="font-size:12px; color:var(--danger-color);">Due: ${r.remainingAmount} EGP</div>
-                            <span class="badge" style="background:#e0f2fe; color:#0369a1; margin-top:5px; display:inline-block;">${r.status}</span>
-                            ${historyHTML}
+                            <strong>ID:</strong> ${req.studentId}<br>
+                            <strong>Name:</strong> ${req.studentName}<br>
+                            <small style="color:#64748b;">${req.college} - ${req.major}</small>
                         </td>
+                        <td>${req.courses.join('<br>')}</td>
+                        <td style="font-weight:700; color:#0f172a;">$${req.totalFees}</td>
+                        <td><span class="badge badge-${getStatusClass(req.status)}">${req.status}</span></td>
                         <td>
-                            <select id="method-${r.requestId}" ${reconciled ? 'disabled' : ''} style="margin: 0 0 8px 0; padding: 6px; font-size: 13px;">
-                                <option value="Cash at Uni">Cash at University Campus</option>
-                                <option value="InstaPay">InstaPay Transfer</option>
-                                <option value="Bank Transfer">Bank Account Deposit</option>
-                            </select>
-                            <input type="date" id="date-${r.requestId}" value="${todayStr}" ${reconciled ? 'disabled' : ''} style="margin:0; padding:6px; font-size:13px;">
-                        </td>
-                        <td>
-                            ${amountFieldHTML}
-                            <input type="text" id="tx-${r.requestId}" ${reconciled ? 'disabled' : ''} placeholder="Ref No. (Optional)" style="margin:0; padding:6px; font-size:13px;">
-                        </td>
-                        <td>
-                            ${reconciled ? `<span style="color:var(--success-color); font-weight:600; font-size:13px;">Fully Reconciled ✓</span>` : `
-                                <div style="display:flex; flex-direction:column; gap:5px;">
-                                    <button class="btn btn-success" style="padding:6px; font-size:12px;" onclick="commitPaymentAndPrint('${r.requestId}', '${r.studentName}', '${r.studentId}', '${r.faculty}')">Confirm Payment & Print Receipt</button>
+                            ${!isPaid ? `
+                                <div style="display:flex; gap:5px; align-items:center;">
+                                    <button class="btn btn-success" style="padding:6px 10px; font-size:12px;" onclick="collectPayment('${req.id}', ${req.totalFees}, 'Cash')">Clear Cash</button>
+                                    <button class="btn btn-primary" style="padding:6px 10px; font-size:12px; background:#0284c7;" onclick="collectPayment('${req.id}', ${req.totalFees}, 'Visa / Card')">Clear Card</button>
+                                </div>
+                            ` : `
+                                <div class="history-box">
+                                    <span style="color:#0369a1; font-weight:600;">Cleared ✓</span><br>
+                                    <button class="reprint-btn" style="margin-top:4px;" onclick="alert('Receipt records are archived inside Google Financial Ledger sheet.')">Verify Archive</button>
                                 </div>
                             `}
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
-            } catch(e) { alert("Ledger interface generation breakdown."); }
+            } catch(e) { 
+                console.error(e);
+                alert("Financial ledger matrix extraction failure."); 
+            }
         }
 
-        function exportToExcel() {
-            if (!globalRequestsData || globalRequestsData.length === 0) {
-                alert("لا توجد بيانات متاحة للتصدير حالياً.");
-                return;
-            }
-
-            // علامة الـ BOM لضمان فتح الملف باللغة العربية والانجليزية داخل برنامج الإكسيل بشكل سليم تماماً
-            let csvContent = "\ufeff"; 
-            
-            // تم تحديث العناوين لتصبح باللغة الإنجليزية الاحترافية والمفهومة محاسبياً لعمليات التدقيق المالي ومراجعة الحسابات
-            csvContent += "Student ID,Student Name,Enrolled Courses,Amount Paid,Payment Method,Payment Date,Receipt Number\n";
-
-            let rowsCount = 0;
-
-            globalRequestsData.forEach(r => {
-                if (r.paymentsHistory && r.paymentsHistory.length > 0) {
-                    r.paymentsHistory.forEach(p => {
-                        rowsCount++;
-                        
-                        // معالجة حالة الأحرف بشكل آمن للتصدير أيضاً
-                        const currentAmount = p.amount !== undefined ? p.amount : (p.AmountPaid !== undefined ? p.AmountPaid : 0);
-                        const currentDate = p.date !== undefined ? p.date : (p.PaymentDate !== undefined ? p.PaymentDate : '');
-                        const currentReceiptNo = p.receiptNo !== undefined ? p.receiptNo : (p.ReceiptNo !== undefined ? p.ReceiptNo : '');
-                        const currentMethod = p.method !== undefined ? p.method : (p.PaymentMethod !== undefined ? p.PaymentMethod : '');
-
-                        // تنظيف وتجهيز نصوص البيانات لمنع تداخل الأعمدة وحمايتها
-                        let studentId = String(r.studentId).replace(/"/g, '""');
-                        let studentName = String(r.studentName).replace(/"/g, '""');
-                        let courses = String(r.courses || 'None').replace(/"/g, '""');
-                        let amount = currentAmount;
-                        let method = String(currentMethod).replace(/"/g, '""');
-                        
-                        let formattedDate = "";
-                        try {
-                            formattedDate = currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : '';
-                        } catch(err) {
-                            formattedDate = currentDate;
-                        }
-                        let receiptNo = String(currentReceiptNo).replace(/"/g, '""');
-
-                        csvContent += `"${studentId}","${studentName}","${courses}",${amount},"${method}","${formattedDate}","${receiptNo}"\n`;
-                    });
-                }
-            });
-
-            if (rowsCount === 0) {
-                alert("لا توجد سجلات مدفوعات مسجلة للطلاب حتى الآن لتصديرها.");
-                return;
-            }
-
-            // إنشاء ملف التحميل وتنزيله للمركز المالي فورا بصيغة CSV المتوافقة بالكامل مع Excel
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", "Tuition_Payments_Report_" + new Date().toISOString().split('T')[0] + ".csv");
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        async function commitPaymentAndPrint(reqId, stuName, stuId, faculty) {
-            const txToken = document.getElementById(`tx-${reqId}`).value.trim() || 'CASH';
-            const payMethod = document.getElementById(`method-${reqId}`).value;
-            const payDate = document.getElementById(`date-${reqId}`).value;
-            const payAmt = document.getElementById(`amt-${reqId}`).value;
-
-            if(!payAmt || payAmt <= 0) { alert("رجاءً، أدخل مبلغ مالي صحيح لإتمام عملية الدفع."); return; }
-
-            const btn = event.target;
-            btn.innerText = "Processing...";
-            btn.disabled = true;
+        async function collectPayment(reqId, amount, method) {
+            if(!confirm(`Confirm clearing total balance payment of $${amount} via [${method}]?`)) return;
 
             try {
-                const res = await fetch(API_URL, {
+                const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
-                        action: 'processFinanceAction',
-                        payload: { 
-                            sessionToken: sessionToken, 
-                            requestId: reqId, 
-                            amountToPay: payAmt,
-                            refNum: txToken,
-                            paymentMethod: payMethod,
-                            paymentDate: payDate,
-                            email: localStorage.getItem('userEmail') 
-                        }
+                        action: 'processFinancePayment',
+                        payload: { sessionToken: sessionToken, requestId: reqId, amount: amount, method: method }
                     })
                 });
-                const out = await res.json();
+                const result = await response.json();
                 
-                if(out.success) {
-                    alert(out.message);
-                    executeDirectPrint(out.receiptNo, stuName, stuId, faculty, payAmt, payDate, payMethod);
+                if(result.success) {
+                    alert(result.message);
+                    const targetReq = {
+                        studentId: document.getElementById('financeTable').innerHTML.match(new RegExp(`ID:</b> (.*?Matching.*?)<br>`)) ? 'Student' : 'Internal Account',
+                        requestId: reqId,
+                        amount: amount,
+                        method: method,
+                        receiptNumber: result.receiptNumber,
+                        printedTime: result.printedTime
+                    };
+                    executeReceiptPrintSpooler(result.receiptNumber, reqId, amount, method, result.printedTime);
                     pullLedger();
                 } else {
-                    alert(out.message);
-                    btn.innerText = "تأكيد الدفع وطباعة الإيصال";
-                    btn.disabled = false;
+                    alert(result.message);
                 }
-            } catch(e) { 
-                alert("Transaction processing block hit."); 
-                btn.innerText = "تأكيد الدفع وطباعة الإيصال";
-                btn.disabled = false;
-            }
+            } catch(e) { alert("Error dispatching collection parameter adjustments."); }
         }
 
-        function executeDirectPrint(receiptNo, name, id, faculty, amount, date, method) {
-            const reasonText = document.getElementById('receiptReasonText').value;
-            const d = new Date(date);
-            const printDate = d.toLocaleDateString('en-GB');
-            const printTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            const amountText = tafqeet(Number(amount));
-
+        function executeReceiptPrintSpooler(receiptNum, reqId, amount, method, printTime) {
             const receiptHTML = `
-                <!DOCTYPE html>
-                <html lang="ar" dir="rtl">
+                <html>
                 <head>
-                    <meta charset="UTF-8">
+                    <title>Print Receipt - ${receiptNum}</title>
                     <style>
-                        @page { size: A5 landscape; margin: 0; }
-                        body {
-                            margin: 0;
-                            padding: 10mm;
-                            width: 210mm;
-                            height: 148mm;
-                            box-sizing: border-box;
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                            background: white;
-                        }
-                        .receipt-container { border: 2px solid #000; padding: 8px; height: 100%; box-sizing: border-box; }
-                        .receipt-inner-border { border: 1px solid #444; padding: 15px; height: 100%; box-sizing: border-box; position: relative; }
-                        .receipt-header { display: table; width: 100%; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; }
-                        .receipt-header-cell { display: table-cell; vertical-align: middle; }
-                        .receipt-box-top { border: 1px solid #000; padding: 6px 12px; border-radius: 4px; text-align: left; direction: ltr; font-family: Arial, sans-serif; font-size: 13px; }
-                        .receipt-title { text-align: center; font-size: 20px; font-weight: bold; margin: 10px 0; letter-spacing: 1px; }
-                        .receipt-row { display: table; width: 100%; margin-bottom: 12px; font-size: 15px; border-bottom: 1px dashed #aaa; padding-bottom: 4px; }
-                        .receipt-cell-inline { display: table-cell; }
-                        .receipt-amount-box { border: 2px solid #000; padding: 6px 15px; font-weight: bold; font-size: 18px; border-radius: 4px; background: #fff; float: left; direction: ltr; }
-                        .receipt-footer { display: table; width: 100%; margin-top: 25px; }
-                        .receipt-footer-cell { display: table-cell; vertical-align: bottom; width: 33.33%; }
-                        .receipt-stamp { width: 95px; height: 95px; border: 1px solid #aaa; border-radius: 50%; margin: 0 auto; text-align: center; color: #777; font-size: 11px; padding-top: 28px; box-sizing: border-box; transform: rotate(-10deg); }
+                        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; color: #000; background:#fff; direction: ltr; }
+                        .receipt-wrapper { border: 2px solid #000; padding: 25px; max-width: 650px; margin: 0 auto; background: #fff; }
+                        .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 20px; }
+                        .receipt-title { font-size: 22px; font-weight: bold; text-transform: uppercase; margin: 5px 0; letter-spacing:1px; }
+                        .receipt-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 15px; }
+                        .receipt-row span { font-weight: bold; }
+                        .receipt-footer { margin-top: 35px; border-top: 2px dashed #000; padding-top: 15px; }
+                        .receipt-stamp { border: 2px solid #000; width: 130px; height: 65px; text-align: center; line-height: 20px; font-size: 11px; font-weight: bold; padding-top:10px; margin-top:10px; text-transform:uppercase; }
                     </style>
                 </head>
                 <body>
-                    <div class="receipt-container">
-                        <div class="receipt-inner-border">
-                            <div class="receipt-header">
-                                <div class="receipt-header-cell" style="width:35%;">
-                                    <div class="receipt-box-top">
-                                        <div style="font-weight:bold; margin-bottom:2px;">Receipt No: <span>${receiptNo}</span></div>
-                                        <div>Date: <span>${printDate}</span></div>
-                                    </div>
-                                </div>
-                                <div class="receipt-header-cell" style="width:30%; text-align:center;">
-                                    <img src="logo.png" style="height:60px;" alt="Logo" onerror="this.style.display='none'">
-                                </div>
-                                <div class="receipt-header-cell" style="width:35%; text-align:left;">
-                                    <h2 style="margin:0; font-size:22px; font-weight:bold;">جامعة شرق العاصمة</h2>
-                                    <p style="margin:0; font-size:13px; font-weight:600; color:#444;">إدارة الحسابات والخزينة</p>
-                                </div>
-                            </div>
-                            <div class="receipt-title">إيصـال اسـتلام نقديـة (CASH RECEIPT)</div>
-                            <div class="receipt-row">
-                                <div class="receipt-cell-inline" style="width:18%; font-weight:bold;">استلمنا من الطالب:</div>
-                                <div class="receipt-cell-inline" style="font-weight:bold; font-size:17px; text-align:right;">${name}</div>
-                            </div>
-                            <div class="receipt-row">
-                                <div class="receipt-cell-inline" style="width:50%;">
-                                    <span style="font-weight:bold;">الكلية المقيد بها:</span> 
-                                    <span style="font-weight:600;">${faculty}</span>
-                                </div>
-                                <div class="receipt-cell-inline" style="width:50%; text-align:left;">
-                                    <span style="font-weight:bold;">رقم الطالب:</span> 
-                                    <span style="font-weight:bold; font-size:16px;">${id}</span>
-                                </div>
-                            </div>
-                            <div class="receipt-row" style="border-bottom:none; margin-bottom:5px;">
-                                <div class="receipt-cell-inline" style="vertical-align: middle; font-weight:bold; width:22%;">مبلغاً وقدره (بالحروف):</div>
-                                <div class="receipt-cell-inline" style="vertical-align: middle; font-weight:bold; text-align:center; font-size:14px; padding:0 5px;">${amountText}</div>
-                                <div class="receipt-cell-inline" style="width:25%;">
-                                    <div class="receipt-amount-box">EGP <span>${amount}</span></div>
-                                </div>
-                            </div>
-                            <div class="receipt-row" style="margin-top:10px;">
-                                <div class="receipt-cell-inline" style="width:12%; font-weight:bold;">وذلك قيمة:</div>
-                                <div class="receipt-cell-inline" style="font-weight:600; text-align:right;">${reasonText}</div>
-                            </div>
-                            <div class="receipt-footer">
-                                <div class="receipt-footer-cell" style="text-align:right; font-size:11px; font-family:Arial, sans-serif; line-height:1.4;">
-                                    Time: <span>${printTime}</span><br>
-                                    Payment: <span>${method}</span>
-                                </div>
-                                <div class="receipt-footer-cell">
-                                    <div class="receipt-stamp">الختم الرسمي<br>Official Stamp</div>
-                                </div>
-                                <div class="receipt-footer-cell" style="text-align:center;">
-                                    <div style="border-top:1.5px solid #000; width:85%; margin:0 auto; padding-top:4px; font-weight:bold; font-size:14px;">
-                                        توقيع المستلم<br><span style="font-size:12px; font-weight:normal;">(Cashier)</span>
-                                    </div>
+                    <div class="receipt-wrapper">
+                        <div class="receipt-header">
+                            <h2 style="margin:0; font-size:24px;">UNIVERSITY OF EAST CAPITAL</h2>
+                            <div class="receipt-title">Official Financial Collection Receipt</div>
+                            <small>Student Services Treasury Clearing Division</small>
+                        </div>
+                        <div class="receipt-row"><div>Receipt Serial Number:</div><span>${receiptNum}</span></div>
+                        <div class="receipt-row"><div>Linked Tracking ID:</div><span>${reqId}</span></div>
+                        <div class="receipt-row"><div>Total Tuition Cleared:</div><span style="font-size:18px;">$${amount}.00 USD</span></div>
+                        <div class="receipt-row"><div>Payment Method:</div><span>${method}</span></div>
+                        <div class="receipt-row"><div>Timestamp:</div><span>${printTime}</span></div>
+                        <div class="receipt-footer">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div class="receipt-stamp">Official Stamp<br>UEC Treasury</div>
+                                <div style="text-align:center; width:200px;">
+                                    <div style="border-bottom:1.5px solid #000; height:40px;"></div>
+                                    <div style="font-size:13px; font-weight:bold; margin-top:5px;">Cashier Signature</div>
                                 </div>
                             </div>
                         </div>
