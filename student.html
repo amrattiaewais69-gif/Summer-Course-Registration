@@ -30,176 +30,151 @@
         <div class="dashboard-grid">
             <div class="card">
                 <h3>Student Profile Architecture</h3>
-                
                 <div style="display: flex; align-items: center; gap: 20px;">
-                    <div style="flex-shrink: 0;">
-                        <img id="studentPhoto" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'></svg>" alt="Student Photo" style="width: 100px; height: 125px; border-radius: 6px; object-fit: cover; border: 2px solid #e2e8f0; background-color: #f8fafc;" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png';">
-                    </div>
-                    <div style="flex-grow: 1;">
+                    <div>
                         <p><strong>System Identification ID:</strong> <span id="lblId">---</span></p>
-                        <p><strong>Full Name:</strong> <span id="lblName">---</span></p>
-                        <p><strong>Faculty / College:</strong> <span id="lblFaculty">---</span></p>
-                        <p><strong>Academic Seniority Level:</strong> <span id="lblLevel">---</span></p>
-                        <p><strong>Assigned Advisor:</strong> <span id="lblSup">---</span></p>
+                        <p><strong>Full Registered Name:</strong> <span id="lblName">---</span></p>
+                        <p><strong>Academic Faculty Host:</strong> <span id="lblCollege">---</span></p>
+                        <p><strong>Configured Specialization Major:</strong> <span id="lblMajor">---</span></p>
+                        <p><strong>Assigned Advisor:</strong> <span id="lblAdvisor">---</span></p>
+                        <p><strong>Workflow Status Parameter:</strong> <span id="lblStatus" style="font-weight:700; color:#4E4099;">---</span></p>
                     </div>
                 </div>
             </div>
-            <div class="card success">
-                <h3>Live Billing & Credit Matrix</h3>
-                <p><strong>Application Phase:</strong> <span id="lblStatus" style="font-weight:bold; color:var(--primary-color);">---</span></p>
-                <p><strong>Calculated Workload:</strong> <span id="lblCredits">0</span> / 10 Max CH</p>
-                <p><strong>Aggregated Invoiced Fees:</strong> <span id="lblFees">0</span> EGP</p>
+
+            <div class="card" id="advisorFeedbackBox" style="display:none; border-left:4px solid var(--warning-color); background:#fffbeb;">
+                <h3 style="color:var(--warning-color); margin-top:0;">Academic Advisor Revision Notes</h3>
+                <p id="advisorCommentText" style="font-style:italic; color:#0f172a; font-size:15px;">No comments compiled.</p>
             </div>
         </div>
 
-        <div id="advisorFeedbackBox" class="card danger" style="display:none; margin-bottom: 25px;">
-            <h3>Academic Advisory Feedback & Constraints</h3>
-            <p id="txtFeedback" style="color:var(--dark-neutral); font-weight:500;"></p>
-        </div>
+        <div class="card" style="margin-top:25px;">
+            <div style="display:flex; justify-content:between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <h3 style="margin:0;">Curriculum Program Course Catalog</h3>
+                    <p style="color:#64748b; margin:5px 0 0 0; font-size:13px;">Select your requested credit load. Matrix loads options filtered by your designated faculty context.</p>
+                </div>
+                <button class="btn btn-success" id="submitCatalogBtn" onclick="executeFinalFormSubmission()" style="display:none; padding:10px 20px; font-weight:600;">Transmit Selection Array</button>
+            </div>
 
-        <h3>Available Summer Program Curriculum Matrix</h3>
-        <table id="catalogTable">
-            <thead>
-                <tr>
-                    <th>Selection Trigger</th>
-                    <th>Course Code</th>
-                    <th>Course Subject Name</th>
-                    <th>Weight Structure</th>
-                    <th>Live Seat Availability</th>
-                    <th>Unit Cost</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        
-        <div style="margin-top:30px; text-align:right;">
-            <button id="commitActionBtn" class="btn btn-success" onclick="executeFinalFormSubmission()">Lock Layout & Final Submit</button>
+            <table id="catalogTable">
+                <thead>
+                    <tr>
+                        <th>Course Code / Selection</th>
+                        <th>Descriptive Course Title</th>
+                        <th>Credit Unit Weight</th>
+                        <th>Tuition Fee Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="4" style="text-align:center; color:#64748b; padding:20px;">Synchronizing workspace course matrix grid array...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
         const sessionToken = localStorage.getItem('sessionToken');
-        const userRole = localStorage.getItem('userRole');
-        let localState = null;
+        
+        if(!sessionToken) { window.location.href = 'index.html'; }
 
-        if (!sessionToken || userRole !== 'student') { window.location.href = 'index.html'; }
-        document.getElementById('displayStudentName').innerText = localStorage.getItem('displayName');
+        let localState = { studentInfo: null, courses: [], currentRequest: null };
 
         async function fetchStateEngine() {
             try {
-                const res = await fetch(API_URL, {
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: 'getStudentDashboard', payload: { sessionToken: sessionToken } })
                 });
-                const data = await res.json();
-                if(!data.success) { alert(data.message); return; }
-                localState = data;
-                renderUI();
-            } catch(e) { alert("Communication timeout with server ecosystem."); }
+                const result = await response.json();
+                
+                if(!result.success) { alert(result.message); logout(); return; }
+
+                localState.studentInfo = result.studentInfo;
+                localState.courses = result.courses;
+                localState.currentRequest = result.currentRequest;
+
+                document.getElementById('displayStudentName').innerText = localState.studentInfo.name;
+                document.getElementById('lblId').innerText = localState.studentInfo.id;
+                document.getElementById('lblName').innerText = localState.studentInfo.name;
+                document.getElementById('lblCollege').innerText = localState.studentInfo.college || 'Unassigned';
+                document.getElementById('lblMajor').innerText = localState.studentInfo.major || 'General';
+                document.getElementById('lblAdvisor').innerText = localState.studentInfo.advisor;
+                document.getElementById('lblStatus').innerText = localState.studentInfo.status;
+
+                const currentStatus = localState.studentInfo.status;
+                renderTracker(currentStatus);
+
+                const isLocked = !['Draft', 'Returned for Modification'].includes(currentStatus);
+                document.getElementById('submitCatalogBtn').style.display = isLocked ? 'none' : 'block';
+
+                if(localState.currentRequest && localState.currentRequest.comments && currentStatus === 'Returned for Modification') {
+                    document.getElementById('advisorFeedbackBox').style.display = 'block';
+                    document.getElementById('advisorCommentText').innerText = `"${localState.currentRequest.comments}"`;
+                } else {
+                    document.getElementById('advisorFeedbackBox').style.display = 'none';
+                }
+
+                compileCourseCatalog(isLocked);
+
+            } catch(e) {
+                console.error(e);
+                alert("Core network infrastructure synchronization error fetching student profile parameters.");
+            }
         }
 
-        function renderUI() {
-            document.getElementById('lblId').innerText = localState.studentInfo.id;
-            
-            // ربط وعرض صورة الطالب ديناميكياً من مجلد photo
-            if (localState.studentInfo.id) {
-                document.getElementById('studentPhoto').src = "photo/" + localState.studentInfo.id + ".jpg";
-            }
-
-            document.getElementById('lblName').innerText = localState.studentInfo.name;
-            // ربط وعرض اسم الكلية برمجياً من الخادم
-            document.getElementById('lblFaculty').innerText = localState.studentInfo.faculty || "---";
-            document.getElementById('lblLevel').innerText = localState.studentInfo.level;
-            document.getElementById('lblSup').innerText = localState.studentInfo.supervisorName;
-            
-            const req = localState.currentRequest;
-            document.getElementById('lblStatus').innerText = req.status;
-            document.getElementById('lblCredits').innerText = req.totalCredits;
-            document.getElementById('lblFees').innerText = req.totalFees;
-
-            evaluateVisualTracker(req.status);
-
-            if(req.comments) {
-                document.getElementById('advisorFeedbackBox').style.display = 'block';
-                document.getElementById('txtFeedback').innerText = req.comments;
-            } else {
-                document.getElementById('advisorFeedbackBox').style.display = 'none';
-            }
-
+        function compileCourseCatalog(isLocked) {
             const tbody = document.querySelector('#catalogTable tbody');
             tbody.innerHTML = '';
 
-            const activeLock = !['Draft', 'Returned for Modification'].includes(req.status);
-            if(activeLock) {
-                document.getElementById('commitActionBtn').disabled = true;
-                document.getElementById('commitActionBtn').innerText = "Application Structure Locked";
-            } else {
-                document.getElementById('commitActionBtn').disabled = false;
-                document.getElementById('commitActionBtn').innerText = "Lock Layout & Final Submit";
+            const catalog = localState.courses;
+            const studentCollege = String(localState.studentInfo.college || '').trim().toLowerCase();
+            
+            // فلترة ذكية ومرنة للمواد لتجنب الفراغات وحساسية الأحرف
+            const filtered = catalog.filter(c => {
+                const courseCollege = String(c.college || '').trim().toLowerCase();
+                return courseCollege === studentCollege || courseCollege === 'general' || studentCollege === '';
+            });
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--danger-color);">No mapped structural course modules found tailored for your active academic cohort context.</td></tr>`;
+                return;
             }
 
-            localState.courses.forEach(c => {
-                const isChecked = localState.selectedCourses.includes(c.courseCode);
+            const chosenCodes = localState.currentRequest ? localState.currentRequest.courses.map(c => String(c).trim()) : [];
+
+            filtered.forEach(c => {
+                const isChoice = chosenCodes.includes(String(c.code).trim());
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>
-                        <input type="checkbox" value="${c.courseCode}" 
-                        data-ch="${c.creditHours}" data-cost="${c.feePerCredit}"
-                        ${isChecked ? 'checked' : ''} ${activeLock || (c.availableSeats <= 0 && !isChecked) ? 'disabled' : ''} 
-                        onchange="evaluateClientMetrics()">
-                    </td>
-                    <td><strong>${c.courseCode}</strong></td>
-                    <td>${c.courseName}</td>
-                    <td><span class="badge">${c.creditHours} CH</span></td>
-                    <td>${c.availableSeats} / ${c.maxSeats} Units Left</td>
-                    <td>${c.feePerCredit} EGP</td>
+                    <td><input type="checkbox" value="${c.code}" ${isChoice ? 'checked' : ''} ${isLocked ? 'disabled' : ''} style="width:auto; margin-right:10px;"> <strong>${c.code}</strong></td>
+                    <td>${c.name}</td>
+                    <td>${c.credits} Credit Hours</td>
+                    <td style="font-weight:600; color:var(--dark-neutral);">$${c.fees}</td>
                 `;
                 tbody.appendChild(tr);
             });
-            evaluateClientMetrics();
         }
 
-        function evaluateClientMetrics() {
-            if(!localState) return;
-            if(!['Draft', 'Returned for Modification'].includes(localState.currentRequest.status)) return;
-
-            const selected = document.querySelectorAll('#catalogTable input[type="checkbox"]:checked');
-            let ch = 0; let fees = 0;
-            selected.forEach(box => {
-                ch += parseInt(box.getAttribute('data-ch'));
-                fees += parseInt(box.getAttribute('data-ch')) * parseFloat(box.getAttribute('data-cost'));
-            });
-
-            if(ch > 10) {
-                alert("You cannot register for more than 10 credit hours.");
-                event.target.checked = false;
-                evaluateClientMetrics();
-                return;
-            }
-            document.getElementById('lblCredits').innerText = ch;
-            document.getElementById('lblFees').innerText = fees;
-        }
-
-        function evaluateVisualTracker(status) {
-            document.querySelectorAll('.tracker-step').forEach(s => s.className = 'tracker-step');
-            if(status === 'Draft') document.getElementById('st-Draft').classList.add('active');
-            if(status === 'Submitted' || status === 'Under Academic Review') {
+        function renderTracker(status) {
+            document.querySelectorAll('.tracker-step').forEach(el => el.classList.remove('active', 'completed'));
+            
+            if(status === 'Draft' || status === 'Returned for Modification') {
+                document.getElementById('st-Draft').classList.add('active');
+            } else if(status === 'Submitted') {
                 document.getElementById('st-Draft').classList.add('completed');
                 document.getElementById('st-Submitted').classList.add('active');
-            }
-            if(status === 'Approved by Supervisor') {
+            } else if(status === 'Approved by Supervisor') {
                 document.getElementById('st-Draft').classList.add('completed');
                 document.getElementById('st-Submitted').classList.add('completed');
                 document.getElementById('st-Approved').classList.add('active');
-            }
-            if(status === 'Pending Payment') {
+            } else if(['Pending Payment', 'Partially Paid'].includes(status)) {
                 document.getElementById('st-Draft').classList.add('completed');
                 document.getElementById('st-Submitted').classList.add('completed');
                 document.getElementById('st-Approved').classList.add('completed');
                 document.getElementById('st-PendingPayment').classList.add('active');
-            }
-            if(status === 'Registered Successfully' || status === 'Payment Confirmed') {
+            } else if(status === 'Registered Successfully') {
                 document.getElementById('st-Draft').classList.add('completed');
                 document.getElementById('st-Submitted').classList.add('completed');
                 document.getElementById('st-Approved').classList.add('completed');
@@ -219,7 +194,7 @@
                     method: 'POST',
                     body: JSON.stringify({
                         action: 'submitRegistration',
-                        payload: { sessionToken: sessionToken, studentId: localState.studentInfo.id, email: localStorage.getItem('userEmail'), courses: collection }
+                        payload: { sessionToken: sessionToken, courses: collection }
                     })
                 });
                 const result = await response.json();
