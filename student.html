@@ -14,6 +14,7 @@
         </div>
         <div>
             <span id="displayStudentName" style="margin-right:20px; font-weight:600;"></span>
+            <button class="btn btn-warning" style="padding: 6px 14px; margin-right: 10px;" onclick="document.getElementById('changePwdModal').style.display='flex'">Change Password</button>
             <button class="btn btn-danger" style="padding: 6px 14px;" onclick="logout()">Disconnect</button>
         </div>
     </div>
@@ -74,6 +75,21 @@
         
         <div style="margin-top:30px; text-align:right;">
             <button id="commitActionBtn" class="btn btn-success" onclick="executeFinalFormSubmission()">Lock Layout & Final Submit</button>
+        </div>
+    </div>
+
+    <div id="changePwdModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); z-index:9999; justify-content:center; align-items:center;">
+        <div class="login-box" style="margin:0; width: 400px; padding: 30px;">
+            <h2 style="color:var(--primary-color); text-align:center; font-size:20px; margin-top:0;">تغيير كلمة المرور</h2>
+            
+            <input type="password" id="optOldPwd" placeholder="كلمة المرور الحالية" required style="margin-bottom: 10px;">
+            <input type="password" id="optNewPwd" placeholder="كلمة المرور الجديدة" required style="margin-bottom: 10px;">
+            <input type="password" id="optConfirmPwd" placeholder="تأكيد كلمة المرور الجديدة" required style="margin-bottom: 20px;">
+            
+            <div style="display:flex; gap:10px;">
+                <button id="btnSubmitChangePwd" class="btn btn-primary" style="flex:1;" onclick="submitPasswordChange()">تحديث</button>
+                <button class="btn btn-danger" style="flex:1;" onclick="document.getElementById('changePwdModal').style.display='none'">إلغاء</button>
+            </div>
         </div>
     </div>
 
@@ -226,6 +242,40 @@
                 alert(result.message);
                 fetchStateEngine();
             } catch(e) { alert("Data transmission error."); }
+        }
+
+        async function submitPasswordChange() {
+            const op = document.getElementById('optOldPwd').value;
+            const np = document.getElementById('optNewPwd').value;
+            const cp = document.getElementById('optConfirmPwd').value;
+            
+            if(!op || !np || !cp) { alert("الرجاء ملء جميع الحقول."); return; }
+            if(np !== cp) { alert("كلمتي المرور غير متطابقتين."); return; }
+            
+            const btn = document.getElementById('btnSubmitChangePwd');
+            btn.disabled = true; btn.innerText = "جاري التحديث...";
+            
+            try {
+                const pRes = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'changePassword', payload: { username: sessionToken, oldPassword: op, newPassword: np, role: 'student' } })
+                });
+                const pData = await pRes.json();
+                if(pData.success) {
+                    alert("تم تغيير كلمة المرور بنجاح.");
+                    document.getElementById('changePwdModal').style.display = 'none';
+                    document.getElementById('optOldPwd').value = '';
+                    document.getElementById('optNewPwd').value = '';
+                    document.getElementById('optConfirmPwd').value = '';
+                } else {
+                    alert(pData.message);
+                }
+            } catch (e) {
+                alert("خطأ في الاتصال بالخادم.");
+            } finally {
+                btn.disabled = false; btn.innerText = "تحديث";
+            }
         }
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
