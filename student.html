@@ -249,11 +249,11 @@
             const np = document.getElementById('optNewPwd').value;
             const cp = document.getElementById('optConfirmPwd').value;
             
-            if(!op || !np || !cp) { alert("الرجاء ملء جميع الحقول."); return; }
-            if(np !== cp) { alert("كلمتي المرور غير متطابقتين."); return; }
+            if(!op || !np || !cp) { alert("Please complete all required fields."); return; }
+            if(np !== cp) { alert("Passwords do not match."); return; }
             
             const btn = document.getElementById('btnSubmitChangePwd');
-            btn.disabled = true; btn.innerText = "جاري التحديث...";
+            btn.disabled = true; btn.innerText = "Updating...";
             
             try {
                 const pRes = await fetch(API_URL, {
@@ -263,7 +263,7 @@
                 });
                 const pData = await pRes.json();
                 if(pData.success) {
-                    alert("تم تغيير كلمة المرور بنجاح.");
+                    alert("Your password has been changed successfully.");
                     document.getElementById('changePwdModal').style.display = 'none';
                     document.getElementById('optOldPwd').value = '';
                     document.getElementById('optNewPwd').value = '';
@@ -272,9 +272,9 @@
                     alert(pData.message);
                 }
             } catch (e) {
-                alert("خطأ في الاتصال بالخادم.");
+                alert("Unable to connect to the server. Please try again later.");
             } finally {
-                btn.disabled = false; btn.innerText = "تحديث";
+                btn.disabled = false; btn.innerText = "Update";
             }
         }
 
