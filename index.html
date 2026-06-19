@@ -7,7 +7,176 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="login-box"><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UEC Registration Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
     <div class="login-box">
+        <div class="logo-container">
+            <img src="logo.png" class="uni-logo-login" alt="University Logo">
+        </div>
+        <h2 style="color:#4E4099; margin-top:0; font-size:24px; text-align:center; font-weight:700;">University of East Capital</h2>
+        <h2 style="color:#0f172a; margin-top:0; font-size:19px; text-align:center; font-weight:500;">Registration Portal Login</h2>
+        <p style="color:#64748b; font-size:14px; text-align:center; margin-bottom:30px;">Access your workspace parameters safely.</p>
+        
+        <form id="loginForm">
+            <label style="font-weight:600; font-size:14px;">User Account Identifier (ID / Username)</label>
+            <input type="text" id="username" placeholder="e.g. 25100012" required>
+            
+            <label style="font-weight:600; font-size:14px; margin-top:15px; display:block;">Security Access Password</label>
+            <input type="password" id="password" placeholder="••••••••" required>
+            
+            <label style="font-weight:600; font-size:14px; margin-top:15px; display:block;">Portal Authorization Role</label>
+            <select id="role" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:20px; font-size:14px;" required>
+                <option value="student">Student Portal</option>
+                <option value="supervisor">Academic Advisor</option>
+                <option value="finance">Bursar / Cashier Office</option>
+                <option value="admin">Central Registrar Hub</option>
+            </select>
+            
+            <button type="submit" id="loginBtn" class="btn btn-primary" style="width:100%; padding:12px; font-weight:600;">Authenticate Identity</button>
+        </form>
+
+        <form id="changePasswordForm" style="display:none;">
+            <h3 style="color:#4E4099; margin-top:0; font-size:18px; text-align:center; font-weight:700;">Update Default Password</h3>
+            <p style="color:#64748b; font-size:13px; text-align:center; margin-bottom:20px;">For secure access, please set a new personal password for your account.</p>
+            
+            <label style="font-weight:600; font-size:14px; display:block;">New Security Password</label>
+            <input type="password" id="newPassword" placeholder="••••••••" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:15px; font-size:14px; box-sizing: border-box;" required>
+            
+            <label style="font-weight:600; font-size:14px; display:block;">Confirm New Password</label>
+            <input type="password" id="confirmPassword" placeholder="••••••••" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:20px; font-size:14px; box-sizing: border-box;" required>
+            
+            <button type="submit" id="changePwdBtn" class="btn btn-success" style="width:100%; padding:12px; font-weight:600; background-color:#16a34a; color:white; border:none; border-radius:6px; cursor:pointer;">Update & Authenticate Identity</button>
+        </form>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
+
+        // متغيرات مؤقتة لحفظ بيانات الجلسة أثناء عملية التحديث
+        let tempToken = "";
+        let tempEmail = "";
+        let tempRole = "";
+        let tempName = "";
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value;
+            const r = document.getElementById('role').value;
+            const btn = document.getElementById('loginBtn');
+            
+            btn.disabled = true;
+            btn.innerText = "Verifying Credentials...";
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify({ 
+                        action: 'login', 
+                        payload: { username: u, password: p, role: r } 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // التحقق مما إذا كان المستخدم يطلب منه النظام تغيير كلمة السر لأول مرة
+                    if (result.requirePasswordChange) {
+                        tempToken = result.token;
+                        tempEmail = result.email;
+                        tempRole = r;
+                        tempName = result.name;
+                        
+                        // التبديل بين النماذج بسلاسة داخل نفس الكارت
+                        document.getElementById('loginForm').style.display = 'none';
+                        document.getElementById('changePasswordForm').style.display = 'block';
+                        return;
+                    }
+
+                    localStorage.setItem('sessionToken', result.token);
+                    localStorage.setItem('userEmail', result.email);
+                    localStorage.setItem('userRole', r);
+                    localStorage.setItem('displayName', result.name);
+                    
+                    window.location.href = r + '.html';
+                } else {
+                    alert("Authentication Failure: " + result.message);
+                }
+            } catch(err) {
+                console.error(err);
+                alert("Network Connection Error to Central Server.\n\nتأكد من الآتي لحل المشكلة:\n1. أن الرابط المنسوخ صحيح ومطابق.\n2. أنك قمت بعمل Deploy -> New Deployment وجعلت صلاحية الوصول Anyone.\n3. أن المتصفح لا يمنع السكريبتات الخارجية.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Authenticate Identity";
+            }
+        });
+
+        // الاستماع لحدث إرسال نموذج تغيير كلمة السر
+        document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const newP = document.getElementById('newPassword').value;
+            const confP = document.getElementById('confirmPassword').value;
+            const btn = document.getElementById('changePwdBtn');
+            
+            if (newP !== confP) {
+                alert("Password Mismatch: The confirmed password does not match your new password.");
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerText = "Updating Security Password...";
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify({ 
+                        action: 'changePassword', 
+                        payload: { 
+                            sessionToken: tempToken, 
+                            role: tempRole, 
+                            newPassword: newP 
+                        } 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    localStorage.setItem('sessionToken', tempToken);
+                    localStorage.setItem('userEmail', tempEmail);
+                    localStorage.setItem('userRole', tempRole);
+                    localStorage.setItem('displayName', tempName);
+                    
+                    window.location.href = tempRole + '.html';
+                } else {
+                    alert("Password Update Failure: " + result.message);
+                }
+            } catch(err) {
+                console.error(err);
+                alert("Network Connection Error during password update configuration.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Update & Authenticate Identity";
+            }
+        });
+    </script>
+</body>
+</html>
         <div class="logo-container">
             <!-- استدعاء اللوجو المرفوع على الجيت هب مباشرة -->
             <img src="logo.png" class="uni-logo-login" alt="University Logo">
