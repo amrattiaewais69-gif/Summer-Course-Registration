@@ -80,15 +80,15 @@
 
     <div id="changePwdModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); z-index:9999; justify-content:center; align-items:center;">
         <div class="login-box" style="margin:0; width: 400px; padding: 30px;">
-            <h2 style="color:var(--primary-color); text-align:center; font-size:20px; margin-top:0;">Change Your Password</h2>
+            <h2 style="color:var(--primary-color); text-align:center; font-size:20px; margin-top:0;">تغيير كلمة المرور</h2>
             
-            <input type="password" id="optOldPwd" placeholder="Current Password" required style="margin-bottom: 10px;">
-            <input type="password" id="optNewPwd" placeholder="New Password" required style="margin-bottom: 10px;">
-            <input type="password" id="optConfirmPwd" placeholder="Confirm New Password" required style="margin-bottom: 20px;">
+            <input type="password" id="optOldPwd" placeholder="كلمة المرور الحالية" required style="margin-bottom: 10px;">
+            <input type="password" id="optNewPwd" placeholder="كلمة المرور الجديدة" required style="margin-bottom: 10px;">
+            <input type="password" id="optConfirmPwd" placeholder="تأكيد كلمة المرور الجديدة" required style="margin-bottom: 20px;">
             
             <div style="display:flex; gap:10px;">
-                <button id="btnSubmitChangePwd" class="btn btn-primary" style="flex:1;" onclick="submitPasswordChange()">Update Password</button>
-                <button class="btn btn-danger" style="flex:1;" onclick="document.getElementById('changePwdModal').style.display='none'">Cancel</button>
+                <button id="btnSubmitChangePwd" class="btn btn-primary" style="flex:1;" onclick="submitPasswordChange()">تحديث</button>
+                <button class="btn btn-danger" style="flex:1;" onclick="document.getElementById('changePwdModal').style.display='none'">إلغاء</button>
             </div>
         </div>
     </div>
@@ -106,6 +106,9 @@
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
                     body: JSON.stringify({ action: 'getStudentDashboard', payload: { sessionToken: sessionToken } })
                 });
                 const data = await res.json();
@@ -118,13 +121,11 @@
         function renderUI() {
             document.getElementById('lblId').innerText = localState.studentInfo.id;
             
-            // ربط وعرض صورة الطالب ديناميكياً من مجلد photo
             if (localState.studentInfo.id) {
                 document.getElementById('studentPhoto').src = "photo/" + localState.studentInfo.id + ".jpg";
             }
 
             document.getElementById('lblName').innerText = localState.studentInfo.name;
-            // ربط وعرض اسم الكلية برمجياً من الخادم
             document.getElementById('lblFaculty').innerText = localState.studentInfo.faculty || "---";
             document.getElementById('lblLevel').innerText = localState.studentInfo.level;
             document.getElementById('lblSup').innerText = localState.studentInfo.supervisorName;
@@ -233,6 +234,9 @@
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
                     body: JSON.stringify({
                         action: 'submitRegistration',
                         payload: { sessionToken: sessionToken, studentId: localState.studentInfo.id, email: localStorage.getItem('userEmail'), courses: collection }
@@ -249,11 +253,11 @@
             const np = document.getElementById('optNewPwd').value;
             const cp = document.getElementById('optConfirmPwd').value;
             
-            if(!op || !np || !cp) { alert("Please complete all required fields."); return; }
-            if(np !== cp) { alert("Passwords do not match."); return; }
+            if(!op || !np || !cp) { alert("الرجاء ملء جميع الحقول."); return; }
+            if(np !== cp) { alert("كلمتي المرور غير متطابقتين."); return; }
             
             const btn = document.getElementById('btnSubmitChangePwd');
-            btn.disabled = true; btn.innerText = "Updating...";
+            btn.disabled = true; btn.innerText = "جاري التحديث...";
             
             try {
                 const pRes = await fetch(API_URL, {
@@ -263,7 +267,7 @@
                 });
                 const pData = await pRes.json();
                 if(pData.success) {
-                    alert("Your password has been changed successfully.");
+                    alert("تم تغيير كلمة المرور بنجاح.");
                     document.getElementById('changePwdModal').style.display = 'none';
                     document.getElementById('optOldPwd').value = '';
                     document.getElementById('optNewPwd').value = '';
@@ -272,9 +276,9 @@
                     alert(pData.message);
                 }
             } catch (e) {
-                alert("Unable to connect to the server. Please try again later.");
+                alert("خطأ في الاتصال بالخادم.");
             } finally {
-                btn.disabled = false; btn.innerText = "Update";
+                btn.disabled = false; btn.innerText = "تحديث";
             }
         }
 
