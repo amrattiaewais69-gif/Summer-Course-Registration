@@ -7,15 +7,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="login-box"><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UEC Registration Portal</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
     <div class="login-box">
         <div class="logo-container">
             <img src="logo.png" class="uni-logo-login" alt="University Logo">
@@ -172,82 +163,6 @@
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Update & Authenticate Identity";
-            }
-        });
-    </script>
-</body>
-</html>
-        <div class="logo-container">
-            <!-- استدعاء اللوجو المرفوع على الجيت هب مباشرة -->
-            <img src="logo.png" class="uni-logo-login" alt="University Logo">
-        </div>
-        <h2 style="color:#4E4099; margin-top:0; font-size:24px; text-align:center; font-weight:700;">University of East Capital</h2>
-        <h2 style="color:#0f172a; margin-top:0; font-size:19px; text-align:center; font-weight:500;">Registration Portal Login</h2>
-        <p style="color:#64748b; font-size:14px; text-align:center; margin-bottom:30px;">Access your workspace parameters safely.</p>
-        
-        <form id="loginForm">
-            <label style="font-weight:600; font-size:14px;">User Account Identifier (ID / Username)</label>
-            <input type="text" id="username" placeholder="e.g. 25100012" required>
-            
-            <label style="font-weight:600; font-size:14px;">Password</label>
-            <input type="password" id="password" placeholder="••••••••" required>
-            
-            <label style="font-weight:600; font-size:14px;">Target System Role Portal</label>
-            <select id="userRole">
-                <option value="student">Students Registration Portal</option>
-                <option value="supervisor">Academic Supervisor Portal</option>
-                <option value="finance">Financial Services Portal</option>
-                <option value="admin">Central Registrar Dashboard</option>
-            </select>
-            
-            <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">Authenticate Identity</button>
-        </form>
-    </div>
-
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec"; 
-
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const btn = document.getElementById('submitBtn');
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value;
-            const r = document.getElementById('userRole').value;
-            
-            btn.disabled = true;
-            btn.innerText = "Connecting to Central Cloud Server...";
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8'
-                    },
-                    body: JSON.stringify({ 
-                        action: 'login', 
-                        payload: { username: u, password: p, role: r } 
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    localStorage.setItem('sessionToken', result.token);
-                    localStorage.setItem('userEmail', result.email);
-                    localStorage.setItem('userRole', r);
-                    localStorage.setItem('displayName', result.name);
-                    
-                    window.location.href = r + '.html';
-                } else {
-                    alert("Authentication Failure: " + result.message);
-                }
-            } catch(err) {
-                console.error(err);
-                alert("Network Connection Error to Central Server.\n\nتأكد من الآتي لحل المشكلة:\n1. أن الرابط المنسوخ صحيح ومطابق.\n2. أنك قمت بعمل Deploy -> New Deployment وجعلت صلاحية الوصول Anyone.\n3. أن المتصفح لا يمنع السكريبتات الخارجية.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Authenticate Identity";
             }
         });
     </script>
