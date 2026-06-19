@@ -84,12 +84,12 @@
                         document.getElementById('updatePwdBtn').onclick = async function() {
                             const np = document.getElementById('newPwd').value;
                             const cp = document.getElementById('confirmPwd').value;
-                            if(!np || np !== cp) { alert("كلمتي المرور غير متطابقتين أو فارغتين."); return; }
-                            if(np === p) { alert("يجب أن تكون كلمة المرور مختلفة عن الافتراضية."); return; }
+                            if(!np || np !== cp) { alert("Passwords do not match or are empty."); return; }
+                            if(np === p) { alert("Your new password must be different from the default password."); return; }
                             
                             const pwdBtn = document.getElementById('updatePwdBtn');
                             pwdBtn.disabled = true;
-                            pwdBtn.innerText = "جاري التحديث...";
+                            pwdBtn.innerText = "Updating...";
                             
                             try {
                                 const pRes = await fetch(API_URL, {
@@ -105,12 +105,12 @@
                                     localStorage.setItem('displayName', result.name);
                                     window.location.href = r + '.html';
                                 } else {
-                                    alert("فشل التحديث: " + pData.message);
-                                    pwdBtn.disabled = false; pwdBtn.innerText = "تحديث الدخول";
+                                    alert("Failed to update: " + pData.message);
+                                    pwdBtn.disabled = false; pwdBtn.innerText = "Update Login Credentials";
                                 }
                             } catch (error) {
-                                alert("خطأ في الاتصال بالخادم.");
-                                pwdBtn.disabled = false; pwdBtn.innerText = "تحديث الدخول";
+                                alert("Unable to connect to the server. Please try again later.");
+                                pwdBtn.disabled = false; pwdBtn.innerText = "Update Login Credentials";
                             }
                         };
                     } else {
