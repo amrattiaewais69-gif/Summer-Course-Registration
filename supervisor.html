@@ -10,7 +10,7 @@
     <div class="navbar">
         <div class="nav-brand">
             <img src="logo.png" class="uni-logo-nav" alt="University Logo">
-            <h2>Academic Advisor Decision</h2>
+            <h2>Academic Advisor Decision Hub</h2>
         </div>
         <div>
             <span id="advisorIdentityName" style="margin-right:20px; font-weight:600;"></span>
@@ -27,70 +27,82 @@
                 <tr>
                     <th>Student Specifications</th>
                     <th>Configured Course Array</th>
-                    <th>Workload Load</th>
+                    <th>Academic Status</th>
                     <th>Application Status</th>
                     <th>Advisory Action Controls</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+                <tr><td colspan="5" style="text-align:center; color:#64748b; padding:20px;">Fetching assigned student registration requests data matrix...</td></tr>
+            </tbody>
         </table>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgsm9-YmmtZPCQIbruqjS_m7dlFDlzuQIzj6utMsiTGWtvMv9JkFfCvPUwq/exec";
         const sessionToken = localStorage.getItem('sessionToken');
-        const userRole = localStorage.getItem('userRole');
-
-        if (!sessionToken || userRole !== 'supervisor') { window.location.href = 'index.html'; }
-        document.getElementById('advisorIdentityName').innerText = "Dr. " + localStorage.getItem('displayName');
+        
+        if(!sessionToken) { window.location.href = 'index.html'; }
 
         async function pullPipeline() {
             try {
-                const res = await fetch(API_URL, {
+                document.getElementById('advisorIdentityName').innerText = localStorage.getItem('displayName') || "Academic Advisor";
+                
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: 'getSupervisorDashboard', payload: { sessionToken: sessionToken } })
                 });
-                const data = await res.json();
-                if(!data.success) { alert(data.message); return; }
+                const result = await response.json();
+                
+                if(!result.success) { alert(result.message); return; }
 
                 const tbody = document.querySelector('#advisingTable tbody');
                 tbody.innerHTML = '';
 
-                data.requests.forEach(r => {
+                if(result.requests.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:25px; color:#64748b;">No active pending structural registration portfolios mapped to your supervisor criteria.</td></tr>`;
+                    return;
+                }
+
+                result.requests.forEach(req => {
                     const tr = document.createElement('tr');
                     
-                    // تحديد حالات الطلب
-                    const isSubmitted = r.status === 'Submitted';
-                    const isApproved = r.status === 'Approved by Supervisor';
-                    // السماح بالتعديل (العودة) إذا كان الطلب مُقدماً أو معتمداً مسبقاً
-                    const canPerformAction = isSubmitted || isApproved;
+                    let statusBadgeClass = 'warning';
+                    if(req.status === 'Approved by Supervisor' || req.status === 'Registered Successfully') statusBadgeClass = 'success';
+                    if(req.status === 'Returned for Modification' || req.status === 'Rejected') statusBadgeClass = 'danger';
 
                     tr.innerHTML = `
-                        <td><strong>${r.studentName}</strong><br><small style="color:#64748b;">ID: ${r.studentId} | Level: ${r.level}</small></td>
-                        <td><div style="max-width:400px; word-wrap:break-word; font-size:13px; color:#334155;">${r.courses}</div></td>
-                        <td><span class="badge">${r.totalCredits} CH</span></td>
-                        <td><span style="font-weight:700; color:var(--primary-color);">${r.status}</span></td>
                         <td>
-                            ${canPerformAction ? `
-                                <input type="text" id="note-${r.requestId}" placeholder="Provide decision rationale..." style="margin-bottom:8px; padding:8px; font-size:13px; width:100%;">
-                                <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                                    ${isSubmitted ? `
-                                        <button class="btn btn-success" style="padding:5px 10px; font-size:12px;" onclick="executeReview('${r.requestId}', 'Approve')">Approve</button>
-                                        <button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="executeReview('${r.requestId}', 'Reject')">Reject</button>
-                                    ` : ''}
-                                    <button class="btn btn-warning" style="padding:5px 10px; font-size:12px;" onclick="executeReview('${r.requestId}', 'Return')">Return for Modification</button>
+                            <strong>ID:</strong> ${req.studentId}<br>
+                            <strong>Name:</strong> ${req.studentName}<br>
+                            <small style="color:#64748b;">${req.college} (${req.major})</small>
+                        </td>
+                        <td>${req.courses.join('<br>')}</td>
+                        <td>
+                            <strong>GPA:</strong> ${req.gpa}<br>
+                            <small>Prev Hours: ${req.registeredHours} hrs</small>
+                        </td>
+                        <td><span class="badge badge-${statusBadgeClass}">${req.status}</span></td>
+                        <td>
+                            ${req.status === 'Submitted' ? `
+                                <textarea id="note-${req.id}" placeholder="Provide advisory feedback feedback statement or modification requirements here..." style="margin-bottom:8px; height:60px; padding:6px; font-size:12px;"></textarea>
+                                <div style="display:flex; gap:5px;">
+                                    <button class="btn btn-success" style="padding:4px 8px; font-size:12px;" onclick="executeReview('${req.id}', 'Approve')">Approve Layout</button>
+                                    <button class="btn btn-warning" style="padding:4px 8px; font-size:12px; color:white;" onclick="executeReview('${req.id}', 'Return')">Return for Mod</button>
                                 </div>
-                            ` : `<span style="color:#94a3b8; font-size:13px; font-weight:500;">Evaluation Completed</span>`}
+                            ` : `<span style="color:#0f766e; font-size:13px; font-weight:500;">Evaluation Process Completed</span>`}
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
-            } catch(e) { alert("Failed to fetch supervisor layout matrix."); }
+            } catch(e) { 
+                console.error(e);
+                alert("Failed to fetch supervisor layout matrix pipeline."); 
+            }
         }
 
         async function executeReview(id, actionToken) {
             const feedbackInput = document.getElementById(`note-${id}`).value.trim();
-            // شرط إضافي: طلب السبب إلزامي فقط في حالة الرفض أو الإعادة للتعديل، اختياري في حالة الموافقة
             if(!feedbackInput && actionToken !== 'Approve') {
                 alert("You must enter a reason before returning the request for modification or rejecting it.");
                 return;
@@ -101,7 +113,7 @@
                     method: 'POST',
                     body: JSON.stringify({
                         action: 'processSupervisorAction',
-                        payload: { sessionToken: sessionToken, requestId: id, action: actionToken, comments: feedbackInput, email: localStorage.getItem('userEmail') }
+                        payload: { sessionToken: sessionToken, requestId: id, action: actionToken, comments: feedbackInput }
                     })
                 });
                 const result = await res.json();
