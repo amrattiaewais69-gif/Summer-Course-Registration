@@ -79,7 +79,7 @@
                 
                 if (result.success) {
                     // التحقق من الحاجة لتغيير كلمة المرور
-                    if (result.requirePasswordChange && r === 'student') {
+                    if (result.requirePasswordChange) {
                         document.getElementById('forcePwdModal').style.display = 'flex';
                         document.getElementById('updatePwdBtn').onclick = async function() {
                             const np = document.getElementById('newPwd').value;
