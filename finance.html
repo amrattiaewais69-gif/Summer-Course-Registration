@@ -77,7 +77,7 @@
         let globalRequestsData = []; // كاش محلي لحفظ البيانات المجلوبة للتصدير الفوري
 
         if (!sessionToken || userRole !== 'finance') { window.location.href = 'index.html'; }
-        document.getElementById('financeUserLabel').innerText = "Desk Operator: " + localStorage.getItem('displayName');
+        document.getElementById('financeUserLabel').innerText = "Finance Officer: Mr. " + localStorage.getItem('displayName');
 
         function tafqeet(num) {
             if(num === 0) return "صفر";
