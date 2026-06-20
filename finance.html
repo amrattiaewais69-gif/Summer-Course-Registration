@@ -49,7 +49,15 @@
         <div style="margin-bottom: 20px; text-align: left;">
             <button class="btn btn-success" style="background-color: #16a34a; padding: 8px 16px; font-weight: 600; font-size: 13px;" onclick="exportToExcel()"> Export Paid Students List </button>
         </div>
-
+        
+          <div style="background: #ffffff; padding: 15px 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: var(--card-shadow); display: flex; align-items: center; gap: 15px;">
+            <span style="font-size: 18px;">🔍</span>
+            <div style="flex-grow: 1; max-width: 400px;">
+                <input type="text" id="searchStudentInput" onkeyup="filterStudentTable()" placeholder="Search by Student ID or Name..." style="margin: 0; padding: 10px 15px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; font-size: 14px; transition: border-color 0.2s;">
+            </div>
+            <span style="font-size: 13px; color: #64748b; font-weight: 500; background: #f1f5f9; padding: 4px 10px; border-radius: 20px;">Live Search Mode</span>
+        </div>
+        
         <h3>Tuition Clearing Pipeline (Max 2 Installments Enforced)</h3>
         
         <table id="ledgerTable">
@@ -435,6 +443,30 @@
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
         window.onload = pullLedger;
+        
+        // دالة البحث المباشر في جدول الحسابات
+        function filterStudentTable() {
+            const input = document.getElementById("searchStudentInput");
+            const filter = input.value.toUpperCase();
+            const tbody = document.querySelector("#ledgerTable tbody");
+            const rows = tbody.getElementsByTagName("tr");
+
+            // المرور على كل صفوف الجدول وإخفاء الصف الذي لا يتطابق مع البحث
+            for (let i = 0; i < rows.length; i++) {
+                // الخلية الأولى (رقم 0) هي التي تحتوي على اسم الطالب والـ ID
+                const studentInfoCell = rows[i].getElementsByTagName("td")[0];
+                if (studentInfoCell) {
+                    const txtValue = studentInfoCell.textContent || studentInfoCell.innerText;
+                    // إذا كان النص موجوداً نعرض الصف، وإلا نخفيه
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }
+        
     </script>
 </body>
 </html>
