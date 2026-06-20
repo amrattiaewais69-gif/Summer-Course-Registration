@@ -146,7 +146,7 @@
                     
                     let historyHTML = "";
                     if(r.paymentsHistory && r.paymentsHistory.length > 0) {
-                        historyHTML = `<div style="margin-top:8px;">`;
+                        historyHTML = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">`;
                         r.paymentsHistory.forEach((p, index) => {
                             // معالجة حالة الأحرف بشكل آمن لدعم مسميات الشيت المباشرة أو مسميات الكود
                             const currentAmount = p.amount !== undefined ? p.amount : (p.AmountPaid !== undefined ? p.AmountPaid : 0);
@@ -154,11 +154,16 @@
                             const currentReceiptNo = p.receiptNo !== undefined ? p.receiptNo : (p.ReceiptNo !== undefined ? p.ReceiptNo : '');
                             const currentMethod = p.method !== undefined ? p.method : (p.PaymentMethod !== undefined ? p.PaymentMethod : '');
 
+                            // صندوق منسق بالكامل بالإنجليزية ومحمي من تداخل النصوص
                             historyHTML += `
-                                <div class="history-box">
-                                    <strong>Installment${index+1}:</strong> ${currentAmount} EGP بتاريخ ${currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : ''}
-                                    <span style="margin: 0 5px; color: #475569; font-weight: 600;">| دفع عبر: ${currentMethod || 'N/A'}</span>
-                                    <button class="reprint-btn" onclick="executeDirectPrint('${currentReceiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${currentAmount}, '${currentDate}', '${currentMethod}')">🖨️ Print Receipt</button>
+                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7; padding: 6px 12px; border-radius: 6px; font-size: 12px; text-align: left; direction: ltr; display: flex; justify-content: space-between; align-items: center; gap: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                                    <div style="color: #334155; font-family: system-ui, -apple-system, sans-serif;">
+                                        <span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 10px; margin-right: 6px; text-transform: uppercase;">Installment ${index+1}</span>
+                                        <strong style="color: #0f172a; font-size: 13px;">${currentAmount} EGP</strong>
+                                        <span style="color: #64748b; margin-left: 8px;">on ${currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : 'N/A'}</span>
+                                        <span style="color: #64748b; margin-left: 8px;">via <span style="color: #0f766e; font-weight: 600;">${currentMethod || 'N/A'}</span></span>
+                                    </div>
+                                    <button class="reprint-btn" style="margin: 0; background: #0284c7; color: white; border: none; padding: 4px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: 500; white-space: nowrap; transition: background 0.2s;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'" onclick="executeDirectPrint('${currentReceiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${currentAmount}, '${currentDate}', '${currentMethod}')">🖨️ Re-Print</button>
                                 </div>`;
                         });
                         historyHTML += `</div>`;
@@ -199,9 +204,10 @@
                 });
             } catch(e) { alert("Ledger interface generation breakdown."); }
         }
+        
         function exportToExcel() {
             if (!globalRequestsData || globalRequestsData.length === 0) {
-                alert("لا توجد بيانات متاحة للتصدير حالياً.");
+                alert("No data is currently available for export.");
                 return;
             }
 
@@ -245,7 +251,7 @@
             });
 
             if (rowsCount === 0) {
-                alert("لا توجد سجلات مدفوعات مسجلة للطلاب حتى الآن لتصديرها.");
+                alert("There are currently no student payment records available for export.");
                 return;
             }
 
@@ -267,7 +273,7 @@
             const payDate = document.getElementById(`date-${reqId}`).value;
             const payAmt = document.getElementById(`amt-${reqId}`).value;
 
-            if(!payAmt || payAmt <= 0) { alert("رجاءً، أدخل مبلغ مالي صحيح لإتمام عملية الدفع."); return; }
+            if(!payAmt || payAmt <= 0) { alert("Please enter a valid payment amount to complete the transaction."); return; }
 
             const btn = event.target;
             btn.innerText = "Processing...";
@@ -298,12 +304,12 @@
                     pullLedger();
                 } else {
                     alert(out.message);
-                    btn.innerText = "تأكيد الدفع وطباعة الإيصال";
+                    btn.innerText = "Confirm Payment & Print Receipt";
                     btn.disabled = false;
                 }
             } catch(e) { 
                 alert("Transaction processing block hit."); 
-                btn.innerText = "تأكيد الدفع وطباعة الإيصال";
+                btn.innerText = "Confirm Payment & Print Receipt";
                 btn.disabled = false;
             }
         }
