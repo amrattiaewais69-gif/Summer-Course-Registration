@@ -310,9 +310,16 @@
 
         function executeDirectPrint(receiptNo, name, id, faculty, amount, date, method) {
             const reasonText = document.getElementById('receiptReasonText').value;
-            const d = new Date(date);
-            const printDate = d.toLocaleDateString('en-GB');
-            const printTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            
+            // تاريخ السداد الفعلي (الذي تم اختياره وقت الدفع)
+            const paymentDateObj = new Date(date);
+            const actualPaymentDate = paymentDateObj.toLocaleDateString('en-GB');
+            
+            // تاريخ ووقت طباعة الإيصال الفعلي (لحظة استخراج الورقة من السيستم)
+            const currentPrintObj = new Date();
+            const printDate = currentPrintObj.toLocaleDateString('en-GB');
+            const printTime = currentPrintObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            
             const amountText = tafqeet(Number(amount));
 
             const receiptHTML = `
@@ -352,7 +359,7 @@
                                 <div class="receipt-header-cell" style="width:35%;">
                                     <div class="receipt-box-top">
                                         <div style="font-weight:bold; margin-bottom:2px;">Receipt No: <span>${receiptNo}</span></div>
-                                        <div>Date: <span>${printDate}</span></div>
+                                        <div>Payment Date: <span>${actualPaymentDate}</span></div>
                                     </div>
                                 </div>
                                 <div class="receipt-header-cell" style="width:30%; text-align:center;">
@@ -391,8 +398,8 @@
                             </div>
                             <div class="receipt-footer">
                                 <div class="receipt-footer-cell" style="text-align:right; font-size:11px; font-family:Arial, sans-serif; line-height:1.4;">
-                                    Time: <span>${printTime}</span><br>
-                                    Payment: <span>${method}</span>
+                                    <strong>Printed:</strong> <span>${printDate} ${printTime}</span><br>
+                                    <strong>Payment:</strong> <span>${method}</span>
                                 </div>
                                 <div class="receipt-footer-cell">
                                     <div class="receipt-stamp">الختم الرسمي<br>Official Stamp</div>
