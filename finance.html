@@ -157,6 +157,7 @@
                             historyHTML += `
                                 <div class="history-box">
                                     <strong>Installment${index+1}:</strong> ${currentAmount} EGP بتاريخ ${currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : ''}
+                                    <span style="margin: 0 5px; color: #475569; font-weight: 600;">| دفع عبر: ${currentMethod || 'N/A'}</span>
                                     <button class="reprint-btn" onclick="executeDirectPrint('${currentReceiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${currentAmount}, '${currentDate}', '${currentMethod}')">🖨️ Print Receipt</button>
                                 </div>`;
                         });
@@ -198,7 +199,6 @@
                 });
             } catch(e) { alert("Ledger interface generation breakdown."); }
         }
-
         function exportToExcel() {
             if (!globalRequestsData || globalRequestsData.length === 0) {
                 alert("لا توجد بيانات متاحة للتصدير حالياً.");
