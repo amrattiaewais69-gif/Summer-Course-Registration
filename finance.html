@@ -27,296 +27,298 @@
         .reprint-btn:hover { background: #0369a1; }
         
         #printFrame { display: none; }
+
+        /* تنسيق النوافذ المنبثقة المودال الاحترافي المتناسق مع النظام */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--primary-color);
+        }
+        .modal-header {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--dark-neutral);
+            font-size: 18px;
+            font-weight: 700;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .form-group-inline {
+            display: flex;
+            gap: 15px;
+        }
+        .form-group-inline > div {
+            flex: 1;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .search-box-container {
+            margin-bottom: 20px;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-success { background: #ccfbf1; color: #115e59; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #ffe4e6; color: #9f1239; }
+        .badge-primary { background: #e0f2fe; color: #075985; }
     </style>
 </head>
 <body>
     <div class="navbar">
         <div class="nav-brand">
+            <img src="logo.png" class="uni-logo-nav" alt="University Logo" style="height:35px; margin-right:10px;">
             <h2>Student Financial Services</h2>
         </div>
         <div>
-            <span id="financeUserLabel" style="margin-right:20px; font-weight:600;"></span>
+            <span id="financeUserLabel" style="margin-right:20px; font-weight:600; color:white;"></span>
             <button class="btn btn-danger" style="padding: 6px 14px;" onclick="logout()">Disconnect</button>
         </div>
     </div>
 
     <div class="container">
-        <div style="background: #ffffff; padding: 15px 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: var(--card-shadow); display: flex; align-items: center; gap: 15px;">
-            <span style="font-size: 18px;">🔍</span>
-            <div style="flex-grow: 1; max-width: 400px;">
-                <input type="text" id="searchStudentInput" onkeyup="filterStudentTable()" placeholder="Search by Student ID or Name..." style="margin: 0; padding: 10px 15px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; font-size: 14px; transition: border-color 0.2s;">
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="search-box-container">
+                <label style="font-weight:600; font-size:14px; display:block; margin-bottom:8px;">Live Student Ledger Search (Name or Student ID)</label>
+                <input type="text" id="searchStudentInput" onkeyup="filterStudentTable()" placeholder="Type student ID or name to filter instantly..." style="margin-bottom:0;">
             </div>
-            <span style="font-size: 13px; color: #64748b; font-weight: 500; background: #f1f5f9; padding: 4px 10px; border-radius: 20px;">Live Search Mode</span>
         </div>
 
-        <table id="ledgerTable">
-            <thead>
-                <tr>
-                    <th>Student Specifications</th>
-                    <th>Fees Status</th>
-                    <th>Payment Parameters</th>
-                    <th>Financial Input Controls</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <h3>Financial Obligation Ledger Pipeline</h3>
+        <p style="color:#64748b; margin-bottom:25px;">Review approved student registrations, apply installment payments, calculate custom scholarships/discounts, and print official financial receipts.</p>
+
+        <div class="card" style="padding:0; overflow-hidden:true;">
+            <table id="ledgerTable">
+                <thead>
+                    <tr>
+                        <th>Student Specifications</th>
+                        <th>Configured Courses</th>
+                        <th>Financial Breakdown</th>
+                        <th>Payment History (Audit Trail)</th>
+                        <th>Status</th>
+                        <th>Financial Controls</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding:30px; color:#64748b;">Loading university ledger database...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-card">
+            <h3 class="modal-header">Execute Financial Transaction</h3>
+            <form id="paymentForm" onsubmit="submitPayment(event)">
+                <input type="hidden" id="modalRequestId">
+                <input type="hidden" id="modalStudentID">
+                
+                <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Student Profile</label>
+                <input type="text" id="modalStudentInfo" readonly style="background:#f8fafc; font-weight:600;">
+
+                <div class="form-group-inline">
+                    <div>
+                        <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Total System Fees</label>
+                        <input type="text" id="modalTotalFees" readonly style="background:#f8fafc;">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Remaining Due Balance</label>
+                        <input type="text" id="modalRemainingDue" readonly style="background:#f8fafc; color:var(--danger-color); font-weight:700;">
+                    </div>
+                </div>
+
+                <div class="card" style="background:#f8fafc; padding:15px; margin-bottom:20px; border:1px dashed #cbd5e1;">
+                    <h4 style="margin:0 0 10px 0; font-size:13px; color:var(--primary-color);">Apply Financial Settlement / Discount (%)</h4>
+                    <div class="form-group-inline">
+                        <div>
+                            <label style="font-weight:500; font-size:12px; margin-bottom:4px; display:block;">Discount Percentage (%)</label>
+                            <input type="number" id="modalDiscountPercent" min="0" max="100" placeholder="e.g. 10" oninput="calculateDiscountAmount()">
+                        </div>
+                        <div>
+                            <label style="font-weight:500; font-size:12px; margin-bottom:4px; display:block;">Calculated Value (EGP)</label>
+                            <input type="text" id="modalDiscountEGP" readonly style="background:#f1f5f9; font-weight:600;" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group-inline">
+                    <div>
+                        <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Amount to Pay Now (EGP)</label>
+                        <input type="number" id="modalAmountPaid" min="0" required placeholder="Enter amount">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Actual Payment Date</label>
+                        <input type="date" id="modalPaymentDate" required>
+                    </div>
+                </div>
+
+                <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Payment Methodology</label>
+                <select id="modalPaymentMethod" required>
+                    <option value="">-- Choose Method --</option>
+                    <option value="Cash">Cash Counter</option>
+                    <option value="InstaPay">InstaPay Digital Transfer</option>
+                    <option value="Bank Transfer">CIB National Bank Deposit</option>
+                    <option value="Vodafone Cash">Vodafone Cash Wallet</option>
+                </select>
+
+                <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Internal Auditor Reference Memo</label>
+                <input type="text" id="modalReferenceNumber" placeholder="e.g. Txn Reference or Receipt ID">
+
+                <div class="modal-actions">
+                    <button type="button" class="btn" style="background:#cbd5e1; color:#334155;" onclick="closePaymentModal()">Cancel Operation</button>
+                    <button type="submit" class="btn btn-success" id="btnSubmitPayment">Post Financial Ledger Entry</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <iframe id="printFrame"></iframe>
 
     <script>
-        // سيقوم النظام تلقائياً بقراءة السكريبت، يرجى الحفاظ على الرابط الخاص بك هنا
-        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4Hrgs..."; 
-        const sessionToken = localStorage.getItem('sessionToken');
-        const userRole = localStorage.getItem('userRole');
-        const displayName = localStorage.getItem('displayName');
+        // الرابط الموحد للاتصال بـ Google Apps Script Backend
+        const API_URL = "https://script.google.com/macros/s/AKfycbw4awY4HrgsSzY3vK0f0S1V05n-p9W8K_Xn7vH2T1Y/exec"; 
+        
+        let sessionToken = localStorage.getItem('sessionToken');
+        let userRole = localStorage.getItem('userRole');
 
+        // الحماية والتحقق من الصلاحيات والأمان لصفحة المحاسب
         if (!sessionToken || userRole !== 'finance') {
-            alert("Unauthorized access. Redirecting to authentication portal.");
+            alert("Access Denied. Secure session parameters missing.");
             window.location.href = 'index.html';
         }
 
-        document.getElementById('financeUserLabel').innerText = `Financial Officer: ${displayName || 'Authorized Account'}`;
+        document.getElementById('financeUserLabel').innerText = `Cashier Workspace: ${localStorage.getItem('displayName') || 'Active Accountant'}`;
 
-        let globalRequestsData = [];
-
+        // دالة جلب البيانات والتدفق المالي بالكامل
         async function pullLedger() {
             try {
-                const res = await fetch(API_URL, {
+                const response = await fetch(API_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'getFinanceDashboard', payload: { sessionToken: sessionToken } })
+                    body: JSON.stringify({
+                        action: 'getFinanceLedger',
+                        payload: { sessionToken: sessionToken }
+                    })
                 });
-                const data = await res.json();
-                if (!data.success) { alert(data.message); return; }
+                const result = await response.json();
+                
+                if (!result.success) {
+                    alert("System rejected request: " + result.message);
+                    return;
+                }
 
-                globalRequestsData = data.requests; 
+                const tbody = document.querySelector("#ledgerTable tbody");
+                tbody.innerHTML = "";
 
-                const tbody = document.querySelector('#ledgerTable tbody');
-                tbody.innerHTML = '';
+                if (!result.data || result.data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:#64748b;">No approved or pipeline student logs mapped to ledger view.</td></tr>`;
+                    return;
+                }
 
-                data.requests.forEach(r => {
+                result.data.forEach(item => {
                     const tr = document.createElement('tr');
-                    const reconciled = r.remainingAmount <= 0;
-                    const todayStr = new Date().toISOString().split('T')[0];
                     
-                    let historyHTML = "";
-                    if(r.paymentsHistory && r.paymentsHistory.length > 0) {
-                        historyHTML = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">`;
-                        r.paymentsHistory.forEach((p, index) => {
-                            const currentAmount = p.amount !== undefined ? p.amount : (p.AmountPaid !== undefined ? p.AmountPaid : 0);
-                            const currentDate = p.date !== undefined ? p.date : (p.PaymentDate !== undefined ? p.PaymentDate : '');
-                            const currentReceiptNo = p.receiptNo !== undefined ? p.receiptNo : (p.ReceiptNo !== undefined ? p.ReceiptNo : '');
-                            const currentMethod = p.method !== undefined ? p.method : (p.PaymentMethod !== undefined ? p.PaymentMethod : '');
+                    // حساب المتبقي والمدفوع بدقة
+                    let totalFees = Number(item.TotalFees) || 0;
+                    let amountPaid = Number(item.AmountPaid) || 0;
+                    let remaining = totalFees - amountPaid;
+                    if(remaining < 0) remaining = 0;
 
-                            historyHTML += `
-                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7; padding: 6px 12px; border-radius: 6px; font-size: 12px; text-align: left; direction: ltr; display: flex; justify-content: space-between; align-items: center; gap: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-                                    <div style="color: #334155; font-family: system-ui, -apple-system, sans-serif;">
-                                        <span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 10px; margin-right: 6px; text-transform: uppercase;">Item ${index+1}</span>
-                                        <strong style="color: #0f172a; font-size: 13px;">${currentAmount} EGP</strong>
-                                        <span style="color: #64748b; margin-left: 8px;">on ${currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : 'N/A'}</span>
-                                        <span style="color: #64748b; margin-left: 8px;">via <span style="color: #0f766e; font-weight: 600;">${currentMethod || 'N/A'}</span></span>
-                                    </div>
-                                    <button class="reprint-btn" style="margin: 0; background: #0284c7; color: white; border: none; padding: 4px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: 500; white-space: nowrap; transition: background 0.2s;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'" onclick="executeDirectPrint('${currentReceiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${currentAmount}, '${currentDate}', '${currentMethod}')">🖨️ Re-Print</button>
-                                </div>`;
+                    // تشكيل خلية الكورسات والساعات
+                    let coursesHTML = `<div style="font-size:12px; font-weight:600; color:#334155;">Credits: ${item.TotalCredits} Hours</div>`;
+                    if (item.Courses && item.Courses.length > 0) {
+                        coursesHTML += `<ul style="margin:5px 0; padding-left:15px; font-size:11px; color:#64748b;">`;
+                        item.Courses.forEach(c => {
+                            coursesHTML += `<li>${c.code} - ${c.name}</li>`;
                         });
-                        historyHTML += `</div>`;
+                        coursesHTML += `</ul>`;
                     }
 
-                    let paymentControlsHTML = `
-                        <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 280px;">
-                            <div>
-                                <label style="font-size: 11px; color: #64748b; font-weight: 600; display: block; margin-bottom: 2px;">Amount to Pay (EGP)</label>
-                                <input type="number" id="amt-${r.requestId}" value="${r.remainingAmount}" max="${r.remainingAmount}" min="0" ${reconciled ? 'disabled' : ''} style="margin: 0; padding: 6px; font-size: 13px; width: 100%;">
-                            </div>
-                            <div style="display: flex; gap: 6px;">
-                                <div style="flex: 1;">
-                                    <label style="font-size: 11px; color: #64748b; font-weight: 600; display: block; margin-bottom: 2px;">Discount %</label>
-                                    <input type="number" id="disc-${r.requestId}" min="0" max="100" value="0" ${reconciled ? 'disabled' : ''} placeholder="0" style="margin: 0; padding: 6px; font-size: 13px; width: 100%;" 
-                                        oninput="calculateDiscount('${r.requestId}', ${r.totalFees}, ${r.remainingAmount})">
-                                </div>
-                                <div style="flex: 1;">
-                                    <label style="font-size: 11px; color: #64748b; font-weight: 600; display: block; margin-bottom: 2px;">Discount Amt</label>
-                                    <input type="number" id="discVal-${r.requestId}" value="0" disabled style="margin: 0; padding: 6px; font-size: 13px; width: 100%; background: #f1f5f9; color: #64748b; font-weight: 600;">
-                                </div>
-                            </div>
-                            <div>
-                                <label style="font-size: 11px; color: #64748b; font-weight: 600; display: block; margin-bottom: 2px;">Approved By</label>
-                                <input type="text" id="appr-${r.requestId}" placeholder="e.g., Dean / Vice Dean" ${reconciled ? 'disabled' : ''} style="margin: 0; padding: 6px; font-size: 13px; width: 100%;">
-                            </div>
-                            <div>
-                                <label style="font-size: 11px; color: #64748b; font-weight: 600; display: block; margin-bottom: 2px;">Ref No. (Optional)</label>
-                                <input type="text" id="tx-${r.requestId}" ${reconciled ? 'disabled' : ''} placeholder="Ref No." style="margin: 0; padding: 6px; font-size: 13px; width: 100%;">
-                            </div>
-                        </div>
-                    `;
+                    // عرض السجل التفريغي للمدفوعات السابقة والخصومات للحساب المالي (Audit Trail)
+                    let historyHTML = "";
+                    if (item.PaymentHistory && item.PaymentHistory.length > 0) {
+                        item.PaymentHistory.forEach(pay => {
+                            let dateObj = new Date(pay.PaymentDate);
+                            let formattedDate = isNaN(dateObj) ? pay.PaymentDate : dateObj.toLocaleDateString('en-GB');
+                            
+                            historyHTML += `
+                                <div class="history-box">
+                                    <strong>${pay.Status === 'Settlement/Discount' ? 'Discount' : 'Receipt'}:</strong> ${pay.AmountPaid} EGP<br>
+                                    <span style="font-size:10px; color:#64748b;">Ref: ${pay.ReferenceNumber || 'N/A'} | ${formattedDate}</span><br>
+                                    <span style="font-size:10px; color:#0284c7; font-style:italic;">By: ${pay.Cashier || 'System'}</span>
+                                    ${pay.Status !== 'Settlement/Discount' ? `<br><button class="reprint-btn" onclick='triggerReprint(${JSON.stringify(pay)}, ${JSON.stringify(item)})'>🖨️ Reprint</button>` : ''}
+                                </div>`;
+                        });
+                    } else {
+                        historyHTML = `<span style="color:#94a3b8; font-size:11px; font-style:italic;">No transactions logged</span>`;
+                    }
+
+                    // كود الحالة الملون
+                    let statusBadge = `<span class="badge badge-warning">Pending Payment</span>`;
+                    if (item.Status === 'Registered Successfully' || remaining === 0) {
+                        statusBadge = `<span class="badge badge-success">Fully Registered</span>`;
+                    } else if (item.Status === 'Partially Paid' || (amountPaid > 0 && remaining > 0)) {
+                        statusBadge = `<span class="badge badge-primary">Partially Paid</span>`;
+                    }
+
+                    // أزرار التحكم والتحصيل الذكي
+                    let controlButtons = "";
+                    if (remaining > 0) {
+                        controlButtons = `<button class="btn btn-success" style="padding: 6px 12px; font-size:12px;" onclick='openPaymentModal(${JSON.stringify(item)}, ${remaining})'>💵 Post Payment/Discount</button>`;
+                    } else {
+                        controlButtons = `<span style="color:#0f766e; font-weight:600; font-size:12px;">✓ Settled Account</span>`;
+                    }
 
                     tr.innerHTML = `
-                        <td><strong>${r.studentName}</strong><br><small style="color:#64748b;">ID: ${r.studentId} | Faculty: ${r.faculty}</small></td>
                         <td>
-                            <div style="font-weight:700; color:#0f172a;">Total: ${r.totalFees} EGP</div>
-                            <div style="font-size:12px; color:var(--success-color);">Paid: ${r.paidAmount} EGP</div>
-                            <div style="font-size:12px; color:var(--danger-color);">Due: ${r.remainingAmount} EGP</div>
-                            <span class="badge" style="background:#e0f2fe; color:#0369a1; margin-top:5px; display:inline-block;">${r.status}</span>
-                            ${historyHTML}
+                            <div style="font-weight:700; color:var(--dark-neutral); font-size:14px;">${item.StudentName}</div>
+                            <div style="font-size:11px; color:#64748b; margin-top:2px;">ID: <strong>${item.StudentID}</strong></div>
+                            <div style="font-size:11px; color:#64748b;">Faculty: ${item.Faculty || 'General'}</div>
                         </td>
+                        <td>${coursesHTML}</td>
                         <td>
-                            <select id="method-${r.requestId}" ${reconciled ? 'disabled' : ''} style="margin: 0 0 8px 0; padding: 6px; font-size: 13px;">
-                                <option value="Cash at Uni">Cash at University Campus</option>
-                                <option value="InstaPay">InstaPay Transfer</option>
-                                <option value="Bank Transfer">Bank Account Deposit</option>
-                            </select>
-                            <input type="date" id="date-${r.requestId}" value="${todayStr}" ${reconciled ? 'disabled' : ''} style="margin:0; padding:6px; font-size:13px;">
+                            <div style="font-size:12px;">Total: <strong>${totalFees} EGP</strong></div>
+                            <div style="font-size:12px; color:#0f766e;">Paid: <strong>${amountPaid} EGP</strong></div>
+                            <div style="font-size:12px; color:var(--danger-color); font-weight:600;">Due: <strong>${remaining} EGP</strong></div>
                         </td>
-                        <td>
-                            ${paymentControlsHTML}
-                        </td>
-                        <td>
-                            ${reconciled ? `<span style="color:var(--success-color); font-weight:600; font-size:13px;">Fully Reconciled ✓</span>` : `
-                                <div style="display:flex; flex-direction:column; gap:5px;">
-                                    <button class="btn btn-success" style="padding:6px; font-size:12px;" onclick="commitPaymentAndPrint('${r.requestId}', '${r.studentName}', '${r.studentId}', '${r.faculty}')">Confirm Payment & Print Receipt</button>
-                                </div>
-                            `}
-                        </td>
+                        <td><div style="max-height:140px; overflow-y:auto; padding-right:5px;">${historyHTML}</div></td>
+                        <td>${statusBadge}</td>
+                        <td>${controlButtons}</td>
                     `;
                     tbody.appendChild(tr);
                 });
-            } catch(e) { alert("Ledger interface generation breakdown."); }
-        }
 
-        function calculateDiscount(requestId, totalFees, remainingAmount) {
-            const discInput = document.getElementById(`disc-${requestId}`);
-            const amtInput = document.getElementById(`amt-${requestId}`);
-            const discValInput = document.getElementById(`discVal-${requestId}`);
-            
-            let discPercent = parseFloat(discInput.value) || 0;
-            if (discPercent > 100) { discPercent = 100; discInput.value = 100; }
-            if (discPercent < 0) { discPercent = 0; discInput.value = 0; }
-            
-            // حساب قيمة الخصم بناءً على إجمالي مصاريف تسجيل الطالب الأصلية
-            const discountAmount = Math.round(totalFees * (discPercent / 100));
-            discValInput.value = discountAmount;
-            
-            // خصم القيمة تلقائياً لتحديث المطلوب دفعه حالياً
-            let newAmountToPay = remainingAmount - discountAmount;
-            if (newAmountToPay < 0) { newAmountToPay = 0; }
-            
-            amtInput.value = newAmountToPay;
-        }
-
-        async function commitPaymentAndPrint(requestId, studentName, studentId, faculty) {
-            const amount = document.getElementById(`amt-${requestId}`).value;
-            const method = document.getElementById(`method-${requestId}`).value;
-            const date = document.getElementById(`date-${requestId}`).value;
-            const refNo = document.getElementById(`tx-${requestId}`).value;
-            
-            const discount = document.getElementById(`disc-${requestId}`).value || 0;
-            const approver = document.getElementById(`appr-${requestId}`).value || '';
-
-            if (amount === '' || amount < 0) { alert("Please enter a valid payment amount."); return; }
-            if (parseFloat(discount) > 0 && !approver.trim()) { 
-                alert("Please specify who approved this discount combination."); 
-                return; 
+            } catch (e) {
+                alert("Critical Link Failure: Failed to fetch supervisor layout matrix and ledger pipeline.");
             }
-
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ 
-                        action: 'processPayment', 
-                        payload: { 
-                            sessionToken: sessionToken, 
-                            requestId, amount, method, date, refNo,
-                            discountPercent: discount,
-                            approvedBy: approver
-                        } 
-                    })
-                });
-                const result = await res.json();
-                if(result.success) {
-                    alert("Transaction completed successfully!");
-                    if (parseFloat(amount) > 0) {
-                        executeDirectPrint(result.receiptNo || 'N/A', studentName, studentId, faculty, amount, date, method);
-                    }
-                    pullLedger(); 
-                } else {
-                    alert(result.message);
-                }
-            } catch(e) { alert("Error processing payment transaction."); }
         }
 
-        function executeDirectPrint(receiptNo, name, id, faculty, amount, date, method) {
-            const printTime = new Date().toLocaleString('en-US');
-            const receiptHTML = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Official Payment Receipt</title>
-                    <style>
-                        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 30px; color: #333; direction: ltr; }
-                        .receipt-container { border: 2px solid #000; padding: 25px; border-radius: 8px; max-width: 650px; margin: 0 auto; background: #fff; }
-                        .receipt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 20px; }
-                        .uni-title { font-size: 20px; font-weight: bold; color: #4E4099; text-transform: uppercase; }
-                        .receipt-title { font-size: 22px; font-weight: bold; text-align: center; background: #000; color: #fff; padding: 5px 15px; border-radius: 4px; }
-                        .receipt-meta { font-size: 13px; text-align: right; line-height: 1.6; }
-                        .receipt-body { font-size: 15px; line-height: 2; margin-bottom: 25px; }
-                        .highlight { font-weight: bold; color: #000; border-bottom: 1px dotted #000; padding: 0 4px; }
-                        .receipt-footer { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; border-top: 2px dashed #000; padding-top: 15px; margin-top: 20px; font-size: 13px; }
-                        .receipt-footer-cell { display: flex; flex-direction: column; justify-content: space-between; }
-                        .receipt-stamp { border: 2px dashed #bbb; border-radius: 50%; width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 10px; font-weight: bold; color: #aaa; margin: 0 auto; transform: rotate(-15deg); text-transform: uppercase; }
-                    </style>
-                </head>
-                <body>
-                    <div class="receipt-container">
-                        <div class="receipt-header">
-                            <div>
-                                <div class="uni-title">University of East Capital</div>
-                                <div style="font-size:12px; color:#555;">Summer Semester Registration Fees</div>
-                            </div>
-                            <div class="receipt-title">RECEIPT</div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:14px;">
-                            <div>Receipt No: <span class="highlight">${receiptNo}</span></div>
-                            <div class="receipt-meta">Date: ${new Date(date).toLocaleDateString('en-GB')}<br>Print Time: ${printTime}</div>
-                        </div>
-                        <div class="receipt-body">
-                            Received from Student: <span class="highlight">${name}</span> &nbsp;&nbsp;&nbsp;&nbsp; ID: <span class="highlight">${id}</span><br>
-                            Faculty / College: <span class="highlight">${faculty}</span><br>
-                            The Sum of Amount: <span class="highlight" style="font-size:18px;">${amount} EGP</span><br>
-                            Paid Settlement Via: <span class="highlight">${method}</span>
-                        </div>
-                        <div class="receipt-footer">
-                            <div class="receipt-footer-cell">
-                                Issued Date: <span>${new Date(date).toLocaleDateString('en-GB')}</span><br>
-                                Print Time: <span>${printTime}</span><br>
-                                Payment: <span>${method}</span>
-                            </div>
-                            <div class="receipt-footer-cell">
-                                <div class="receipt-stamp">Official Stamp<br>الختم الرسمي</div>
-                            </div>
-                            <div class="receipt-footer-cell" style="text-align:center;">
-                                <div style="border-top:1.5px solid #000; width:85%; margin:0 auto; padding-top:4px; font-weight:bold; font-size:14px;">
-                                    Cashier Signature<br><span style="font-size:12px; font-weight:normal;">توقيع المستلم</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `;
-
-            const iframe = document.getElementById('printFrame');
-            iframe.contentWindow.document.open();
-            iframe.contentWindow.document.write(receiptHTML);
-            iframe.contentWindow.document.close();
-
-            setTimeout(() => {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-            }, 300);
-        }
-
+        // دالة البحث المباشر في جدول الحسابات بالاسم أو الـ ID
         function filterStudentTable() {
             const input = document.getElementById("searchStudentInput");
             const filter = input.value.toUpperCase();
@@ -336,7 +338,249 @@
             }
         }
 
-        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+        // فتح نافذة التحصيل وتجهيز المتغيرات والتواريخ التلقائية
+        function openPaymentModal(item, remainingDue) {
+            document.getElementById('modalRequestId').value = item.RequestID;
+            document.getElementById('modalStudentID').value = item.StudentID;
+            document.getElementById('modalStudentInfo').value = `${item.StudentID} - ${item.StudentName}`;
+            document.getElementById('modalTotalFees').value = (Number(item.TotalFees) || 0) + " EGP";
+            document.getElementById('modalRemainingDue').value = remainingDue + " EGP";
+            
+            // تعيين قيم الخصم الافتراضية لصفر عند الفتح
+            document.getElementById('modalDiscountPercent').value = "";
+            document.getElementById('modalDiscountEGP').value = "0 EGP";
+            document.getElementById('modalAmountPaid').value = remainingDue; // القيمة الافتراضية المقترحة للدفع الكامل
+            
+            // تعيين تاريخ السداد التلقائي ليوم التحصيل الفعلي الحالي كخيار افتراضي قابل للتغيير
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('modalPaymentDate').value = today;
+
+            document.getElementById('modalPaymentMethod').value = "";
+            document.getElementById('modalReferenceNumber').value = "";
+
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+
+        // دالة الحساب الذكي الفوري لقيمة الخصم بالـ EGP وخصمها تلقائياً من حقل المدفوع
+        function calculateDiscountAmount() {
+            const percentInput = document.getElementById('modalDiscountPercent').value;
+            const remainingDueStr = document.getElementById('modalRemainingDue').value;
+            const remainingDue = parseFloat(remainingDueStr) || 0;
+
+            if (!percentInput || percentInput <= 0) {
+                document.getElementById('modalDiscountEGP').value = "0 EGP";
+                document.getElementById('modalAmountPaid').value = remainingDue;
+                return;
+            }
+
+            const percent = parseFloat(percentInput) || 0;
+            if (percent > 100) {
+                alert("Discount percentage cannot exceed 100%.");
+                document.getElementById('modalDiscountPercent').value = 100;
+                calculateDiscountAmount();
+                return;
+            }
+
+            // حساب الخصم الفعلي بالجنيه المصري
+            const discountEGP = (remainingDue * (percent / 100)).toFixed(2);
+            document.getElementById('modalDiscountEGP').value = discountEGP + " EGP";
+
+            // تحديث ذكي وتلقائي للمبلغ المراد دفعه بعد استبعاد قيمة الخصم والتسوية
+            const netAmountToPay = (remainingDue - discountEGP).toFixed(2);
+            document.getElementById('modalAmountPaid').value = netAmountToPay >= 0 ? netAmountToPay : 0;
+        }
+
+        // إرسال معاملة الدفع أو الخصم للباك إند وتحديث الجداول وتوثيق المعاملات
+        async function submitPayment(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btnSubmitPayment');
+            btn.disabled = true;
+            btn.innerText = "Processing Transaction...";
+
+            const requestId = document.getElementById('modalRequestId').value;
+            const studentId = document.getElementById('modalStudentID').value;
+            const amountPaid = parseFloat(document.getElementById('modalAmountPaid').value) || 0;
+            const discountPercent = parseFloat(document.getElementById('modalDiscountPercent').value) || 0;
+            const discountEGP = parseFloat(document.getElementById('modalDiscountEGP').value) || 0;
+            const paymentMethod = document.getElementById('modalPaymentMethod').value;
+            const paymentDate = document.getElementById('modalPaymentDate').value;
+            const refNum = document.getElementById('modalReferenceNumber').value.trim();
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'processPayment',
+                        payload: {
+                            sessionToken: sessionToken,
+                            requestId: requestId,
+                            studentId: studentId,
+                            amountPaid: amountPaid,
+                            discountPercent: discountPercent,
+                            discountEGP: discountEGP,
+                            paymentMethod: paymentMethod,
+                            paymentDate: paymentDate,
+                            referenceNumber: refNum,
+                            cashierEmail: localStorage.getItem('userEmail')
+                        }
+                    })
+                });
+                
+                const result = await res.json();
+                alert(result.message);
+                
+                if (result.success) {
+                    closePaymentModal();
+                    pullLedger(); // تحديث الجدول فوراً
+
+                    // إذا كان هناك مدفوع كاش أو بنكي أكبر من صفر، نقوم بطباعة الإيصال فوراً تلقائياً
+                    if (amountPaid > 0 && result.paymentReceiptData) {
+                        executeReceiptPrint(result.paymentReceiptData);
+                    }
+                }
+            } catch (err) {
+                alert("Network communication error. Unable to log financial transaction entry.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Post Financial Ledger Entry";
+            }
+        }
+
+        // إعادة طباعة الإيصالات القديمة من الـ Audit Trail التاريخي
+        function triggerReprint(payment, studentItem) {
+            const receiptData = {
+                receiptNo: payment.ReferenceNumber || `UEC-2026-${payment.PaymentID || 'REPRINT'}`,
+                studentID: studentItem.StudentID,
+                studentName: studentItem.StudentName,
+                faculty: studentItem.Faculty || 'General',
+                amount: payment.AmountPaid,
+                method: payment.PaymentMethod,
+                paymentDate: payment.PaymentDate,
+                cashier: payment.Cashier || 'System Ledger'
+            };
+            executeReceiptPrint(receiptData);
+        }
+
+        // محرك وطابعة الإيصالات ثنائية اللغة (Arabic/English) الفخمة المدمجة
+        function executeReceiptPrint(data) {
+            const printDate = new Date(data.paymentDate).toLocaleDateString('en-GB');
+            const printTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const method = data.method || 'Cash';
+
+            const receiptHTML = `
+                <!DOCTYPE html>
+                <html lang="ar">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Official Payment Receipt</title>
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: ltr; margin: 0; padding: 20px; color: #000; background:#fff; }
+                        .receipt-container { border: 3px double #000; padding: 25px; max-width: 650px; margin: 0 auto; box-sizing: border-box; position:relative; }
+                        .receipt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+                        .logo-box { text-align: center; width: 80px; font-weight: bold; font-size: 11px; }
+                        .header-text h2 { margin: 0; font-size: 18px; font-weight: 800; color: #000; }
+                        .header-text h3 { margin: 4px 0 0 0; font-size: 14px; font-weight: 500; }
+                        .receipt-title { text-align: center; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 15px 0; border: 1px solid #000; padding: 5px 0; background: #f8fafc; }
+                        .meta-grid { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; }
+                        .meta-cell span { font-weight: bold; border-bottom: 1px dashed #000; }
+                        .data-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 14px; }
+                        .data-table th, .data-table td { border: 1px solid #000; padding: 10px; text-align: left; }
+                        .data-table th { background: #f1f5f9; font-weight: bold; }
+                        .receipt-footer { display: flex; justify-content: space-between; margin-top: 40px; font-size: 13px; }
+                        .receipt-footer-cell { width: 30%; }
+                        .receipt-stamp { border: 2px dashed #000; height: 75px; width: 130px; margin: 10px 0 0 0; text-align: center; line-height: 35px; font-size: 11px; color:#64748b; font-weight:bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt-container">
+                        <div class="receipt-header">
+                            <div style="text-align: left;">
+                                <strong>University of East Capital</strong><br>
+                                Student Financial Services<br>
+                                <span style="font-size:11px;">Central Registrar Department</span>
+                            </div>
+                            <div class="logo-box">
+                                <span style="font-size:24px;">UEC</span>
+                            </div>
+                            <div style="text-align: right; direction: rtl;">
+                                <strong>جامعة شرق العاصمة</strong><br>
+                                الخدمات المالية للطلاب<br>
+                                <span style="font-size:11px;">إدارة التسجيل المركزي</span>
+                            </div>
+                        </div>
+
+                        <div class="receipt-title">إيصال سداد مالي رسـمي<br>Official Payment Receipt</div>
+
+                        <div class="meta-grid">
+                            <div class="meta-cell">Receipt No: <span>\u00A0${data.receiptNo}\u00A0</span></div>
+                            <div class="meta-cell">Date: <span>\u00A0${printDate}\u00A0</span></div>
+                        </div>
+
+                        <table class="data-table">
+                            <tr>
+                                <th style="width: 35%;">Student Identifier / الرقم الجامعي</th>
+                                <td><strong>${data.studentID}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Student Name / اسم الطالب</th>
+                                <td>${data.studentName}</td>
+                            </tr>
+                            <tr>
+                                <th>Faculty College / الكلية التابع لها</th>
+                                <td>${data.faculty}</td>
+                            </tr>
+                            <tr>
+                                <th>Paid Amount / المبلغ المدفوع</th>
+                                <td><span style="font-size:16px; font-weight:bold;">${data.amount} EGP</span></td>
+                            </tr>
+                        </table>
+
+                        <div style="font-size: 12px; margin-bottom: 25px; font-style: italic; background:#f8fafc; padding:8px; border-left:3px solid #000;">
+                            * This documentation verifies that the designated transaction sum has been credited into university frameworks.
+                        </div>
+
+                        <div class="receipt-footer">
+                            <div class="receipt-footer-cell">
+                                <strong>Transaction Metrics:</strong><br>
+                                Server Time: <span>${printTime}</span><br>
+                                Payment: <span>${method}</span>
+                            </div>
+                            <div class="receipt-footer-cell">
+                                <div class="receipt-stamp">الختم الرسمي<br>Official Stamp</div>
+                            </div>
+                            <div class="receipt-footer-cell" style="text-align:center;">
+                                <div style="border-top:1.5px solid #000; width:85%; margin:0 auto; padding-top:4px; font-weight:bold; font-size:14px;">
+                                    توقيع المستلم<br><span style="font-size:12px; font-weight:normal;">(Cashier)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const iframe = document.getElementById('printFrame');
+            iframe.contentWindow.document.open();
+            iframe.contentWindow.document.write(receiptHTML);
+            iframe.contentWindow.document.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }, 300);
+        }
+
+        function logout() { 
+            localStorage.clear(); 
+            window.location.href = 'index.html'; 
+        }
+
+        // بدء التشغيل وجلب البيانات المباشرة فور تحميل الواجهة
         window.onload = pullLedger;
     </script>
 </body>
