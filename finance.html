@@ -60,7 +60,6 @@
             <span style="font-size: 13px; color: #64748b; font-weight: 500; background: #f1f5f9; padding: 4px 10px; border-radius: 20px;">Live Search Mode</span>
         </div>
         
-        
         <table id="ledgerTable">
             <thead>
                 <tr>
@@ -83,7 +82,7 @@
         const sessionToken = localStorage.getItem('sessionToken');
         const userRole = localStorage.getItem('userRole');
 
-        let globalRequestsData = []; // كاش محلي لحفظ البيانات المجلوبة للتصدير الفوري
+        let globalRequestsData = []; 
 
         if (!sessionToken || userRole !== 'finance') { window.location.href = 'index.html'; }
         document.getElementById('financeUserLabel').innerText = "Finance Officer: Mr. " + localStorage.getItem('displayName');
@@ -143,7 +142,7 @@
                 const data = await res.json();
                 if (!data.success) { alert(data.message); return; }
 
-                globalRequestsData = data.requests; // تخزين البيانات فور ورودها لنجاح عملية التصدير
+                globalRequestsData = data.requests; 
 
                 const tbody = document.querySelector('#ledgerTable tbody');
                 tbody.innerHTML = '';
@@ -154,38 +153,59 @@
                     const todayStr = new Date().toISOString().split('T')[0];
                     
                     let historyHTML = "";
+                    let actualPaid = 0;
+                    let discountTotal = 0;
+
                     if(r.paymentsHistory && r.paymentsHistory.length > 0) {
                         historyHTML = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">`;
-                        r.paymentsHistory.forEach((p, index) => {
-                            // معالجة حالة الأحرف بشكل آمن لدعم مسميات الشيت المباشرة أو مسميات الكود
-                            const currentAmount = p.amount !== undefined ? p.amount : (p.AmountPaid !== undefined ? p.AmountPaid : 0);
+                        let installCount = 1;
+                        
+                        r.paymentsHistory.forEach((p) => {
+                            const currentAmount = parseFloat(p.amount !== undefined ? p.amount : (p.AmountPaid !== undefined ? p.AmountPaid : 0)) || 0;
                             const currentDate = p.date !== undefined ? p.date : (p.PaymentDate !== undefined ? p.PaymentDate : '');
                             const currentReceiptNo = p.receiptNo !== undefined ? p.receiptNo : (p.ReceiptNo !== undefined ? p.ReceiptNo : '');
                             const currentMethod = p.method !== undefined ? p.method : (p.PaymentMethod !== undefined ? p.PaymentMethod : '');
+                            const status = p.status !== undefined ? p.status : (p.Status !== undefined ? p.Status : '');
+                            const refNumber = p.refNum !== undefined ? p.refNum : (p.ReferenceNumber !== undefined ? p.ReferenceNumber : '');
 
-                            // صندوق منسق بالكامل بالإنجليزية ومحمي من تداخل النصوص
-                            historyHTML += `
-                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7; padding: 6px 12px; border-radius: 6px; font-size: 12px; text-align: left; direction: ltr; display: flex; justify-content: space-between; align-items: center; gap: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-                                    <div style="color: #334155; font-family: system-ui, -apple-system, sans-serif;">
-                                        <span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 10px; margin-right: 6px; text-transform: uppercase;">Installment ${index+1}</span>
-                                        <strong style="color: #0f172a; font-size: 13px;">${currentAmount} EGP</strong>
-                                        <span style="color: #64748b; margin-left: 8px;">on ${currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : 'N/A'}</span>
-                                        <span style="color: #64748b; margin-left: 8px;">via <span style="color: #0f766e; font-weight: 600;">${currentMethod || 'N/A'}</span></span>
-                                    </div>
-                                    <button class="reprint-btn" style="margin: 0; background: #0284c7; color: white; border: none; padding: 4px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: 500; white-space: nowrap; transition: background 0.2s;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'" onclick="executeDirectPrint('${currentReceiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${currentAmount}, '${currentDate}', '${currentMethod}')">🖨️ Re-Print</button>
-                                </div>`;
+                            // فصل الخصم عن الدفعات في الواجهة
+                            if (currentMethod === 'Discount' || status === 'Settlement/Discount') {
+                                discountTotal += currentAmount;
+                                historyHTML += `
+                                    <div style="background: #fff1f2; border: 1px solid #fecdd3; border-left: 4px solid #e11d48; padding: 6px 12px; border-radius: 6px; font-size: 12px; text-align: left; direction: ltr; display: flex; justify-content: space-between; align-items: center; gap: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                                        <div style="color: #334155; font-family: system-ui, -apple-system, sans-serif;">
+                                            <span style="background: #ffe4e6; color: #be123c; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 10px; margin-right: 6px; text-transform: uppercase;">Discount Applied</span>
+                                            <strong style="color: #e11d48; font-size: 13px;">- ${currentAmount} EGP</strong>
+                                            <span style="color: #64748b; margin-left: 8px;">on ${currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : 'N/A'}</span>
+                                            <div style="color: #e11d48; margin-top: 4px; font-style: italic; font-weight: 600;">(${refNumber || 'Discount Applied'})</div>
+                                        </div>
+                                    </div>`;
+                            } else {
+                                actualPaid += currentAmount;
+                                historyHTML += `
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7; padding: 6px 12px; border-radius: 6px; font-size: 12px; text-align: left; direction: ltr; display: flex; justify-content: space-between; align-items: center; gap: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                                        <div style="color: #334155; font-family: system-ui, -apple-system, sans-serif;">
+                                            <span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 10px; margin-right: 6px; text-transform: uppercase;">Installment ${installCount}</span>
+                                            <strong style="color: #0f172a; font-size: 13px;">${currentAmount} EGP</strong>
+                                            <span style="color: #64748b; margin-left: 8px;">on ${currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : 'N/A'}</span>
+                                            <span style="color: #64748b; margin-left: 8px;">via <span style="color: #0f766e; font-weight: 600;">${currentMethod || 'N/A'}</span></span>
+                                        </div>
+                                        <button class="reprint-btn" style="margin: 0; background: #0284c7; color: white; border: none; padding: 4px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: 500; white-space: nowrap; transition: background 0.2s;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'" onclick="executeDirectPrint('${currentReceiptNo}', '${r.studentName}', '${r.studentId}', '${r.faculty}', ${currentAmount}, '${currentDate}', '${currentMethod}')">🖨️ Re-Print</button>
+                                    </div>`;
+                                installCount++;
+                            }
                         });
                         historyHTML += `</div>`;
                     }
 
-                    // إضافة خانات الدفع والخصم والموافقة
                     let amountFieldHTML = `
                         <div style="display: flex; flex-direction: column; gap: 5px; margin:0 0 8px 0;">
                             <input type="number" id="amt-${r.requestId}" value="${r.remainingAmount}" max="${r.remainingAmount}" min="0" ${reconciled ? 'disabled' : ''} placeholder="Amt to Pay" style="margin:0; padding:6px; font-size:13px;">
                             <div style="display: flex; gap: 5px;">
-                                <input type="number" id="disc-${r.requestId}" placeholder="Disc %" min="0" max="100" ${reconciled ? 'disabled' : ''} style="margin:0; padding:6px; font-size:13px; width: 50%;">
+                                <input type="number" id="disc-${r.requestId}" placeholder="Disc %" min="0" max="100" ${reconciled ? 'disabled' : ''} style="margin:0; padding:6px; font-size:13px; width: 50%;" oninput="calculateRemaining('${r.requestId}', ${r.remainingAmount}, ${r.totalFees})">
                                 <input type="text" id="appr-${r.requestId}" placeholder="Approved By" ${reconciled ? 'disabled' : ''} style="margin:0; padding:6px; font-size:13px; width: 50%;">
                             </div>
+                            <small id="hint-${r.requestId}" style="color:#0f766e; font-weight:600; font-size:11px; display:none;"></small>
                         </div>
                     `;
 
@@ -193,8 +213,9 @@
                         <td><strong>${r.studentName}</strong><br><small style="color:#64748b;">ID: ${r.studentId} | الكلية: ${r.faculty}</small></td>
                         <td>
                             <div style="font-weight:700; color:#0f172a;">Total: ${r.totalFees} EGP</div>
-                            <div style="font-size:12px; color:var(--success-color);">Paid: ${r.paidAmount} EGP</div>
-                            <div style="font-size:12px; color:var(--danger-color);">Due: ${r.remainingAmount} EGP</div>
+                            <div style="font-size:12px; color:var(--success-color);">Actual Paid: ${actualPaid} EGP</div>
+                            ${discountTotal > 0 ? `<div style="font-size:12px; color:#e11d48; font-weight:600;">Discount: -${discountTotal} EGP</div>` : ''}
+                            <div style="font-size:12px; color:var(--danger-color); font-weight:700;">Due: ${r.remainingAmount} EGP</div>
                             <span class="badge" style="background:#e0f2fe; color:#0369a1; margin-top:5px; display:inline-block;">${r.status}</span>
                             ${historyHTML}
                         </td>
@@ -204,7 +225,6 @@
                                 <option value="InstaPay">InstaPay Transfer</option>
                                 <option value="Bank Transfer">Bank Account Deposit</option>
                                 <option value="POS">POS</option>
-
                             </select>
                             <input type="date" id="date-${r.requestId}" value="${todayStr}" ${reconciled ? 'disabled' : ''} style="margin:0; padding:6px; font-size:13px;">
                         </td>
@@ -225,48 +245,83 @@
             } catch(e) { alert("Ledger interface generation breakdown."); }
         }
         
+        function calculateRemaining(reqId, remainingAmt, totalFees) {
+            const discInput = document.getElementById(`disc-${reqId}`);
+            const amtInput = document.getElementById(`amt-${reqId}`);
+            const hint = document.getElementById(`hint-${reqId}`);
+            
+            if (discInput && discInput.value) {
+                let perc = parseFloat(discInput.value);
+                if(perc < 0) perc = 0;
+                if(perc > 100) perc = 100;
+                
+                let discVal = Math.round((totalFees * perc) / 100);
+                let newPay = remainingAmt - discVal;
+                if(newPay < 0) newPay = 0;
+                
+                amtInput.value = newPay;
+                hint.style.display = 'block';
+                hint.innerText = `Discount Value: -${discVal} EGP`;
+            } else {
+                amtInput.value = remainingAmt;
+                if(hint) hint.style.display = 'none';
+            }
+        }
+        
         function exportToExcel() {
             if (!globalRequestsData || globalRequestsData.length === 0) {
                 alert("No data is currently available for export.");
                 return;
             }
 
-            // علامة الـ BOM لضمان فتح الملف باللغة العربية والانجليزية داخل برنامج الإكسيل بشكل سليم تماماً
             let csvContent = "\ufeff"; 
-            
-            // تم تحديث العناوين لتصبح باللغة الإنجليزية الاحترافية والمفهومة محاسبياً لعمليات التدقيق المالي ومراجعة الحسابات
-            csvContent += "Student ID,Student Name,Enrolled Courses,Amount Paid,Payment Method,Payment Date,Receipt Number\n";
+            csvContent += "Student ID,Student Name,Enrolled Courses,Actual Cash Paid,Discount Applied,Discount Details & Approval,Payment Method,Payment Date,Receipt Number\n";
 
             let rowsCount = 0;
 
             globalRequestsData.forEach(r => {
                 if (r.paymentsHistory && r.paymentsHistory.length > 0) {
+                    let totalPaid = 0;
+                    let totalDiscount = 0;
+                    let discountDetails = [];
+                    let paymentMethods = [];
+                    let paymentDates = [];
+                    let receiptNos = [];
+
                     r.paymentsHistory.forEach(p => {
-                        rowsCount++;
-                        
-                        // معالجة حالة الأحرف بشكل آمن للتصدير أيضاً
-                        const currentAmount = p.amount !== undefined ? p.amount : (p.AmountPaid !== undefined ? p.AmountPaid : 0);
+                        const currentAmount = parseFloat(p.amount !== undefined ? p.amount : (p.AmountPaid !== undefined ? p.AmountPaid : 0)) || 0;
+                        const currentMethod = p.method !== undefined ? p.method : (p.PaymentMethod !== undefined ? p.PaymentMethod : '');
                         const currentDate = p.date !== undefined ? p.date : (p.PaymentDate !== undefined ? p.PaymentDate : '');
                         const currentReceiptNo = p.receiptNo !== undefined ? p.receiptNo : (p.ReceiptNo !== undefined ? p.ReceiptNo : '');
-                        const currentMethod = p.method !== undefined ? p.method : (p.PaymentMethod !== undefined ? p.PaymentMethod : '');
+                        const refNumber = p.refNum !== undefined ? p.refNum : (p.ReferenceNumber !== undefined ? p.ReferenceNumber : '');
+                        const status = p.status !== undefined ? p.status : (p.Status !== undefined ? p.Status : '');
 
-                        // تنظيف وتجهيز نصوص البيانات لمنع تداخل الأعمدة وحمايتها
+                        let formattedDate = "";
+                        try { formattedDate = currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : ''; } catch(err) { formattedDate = currentDate; }
+
+                        if (currentMethod === 'Discount' || status === 'Settlement/Discount') {
+                            totalDiscount += currentAmount;
+                            if(refNumber) discountDetails.push(refNumber);
+                        } else {
+                            totalPaid += currentAmount;
+                            if(currentMethod && !paymentMethods.includes(currentMethod)) paymentMethods.push(currentMethod);
+                            if(formattedDate && !paymentDates.includes(formattedDate)) paymentDates.push(formattedDate);
+                            if(currentReceiptNo) receiptNos.push(currentReceiptNo);
+                        }
+                    });
+
+                    if (totalPaid > 0 || totalDiscount > 0) {
+                        rowsCount++;
                         let studentId = String(r.studentId).replace(/"/g, '""');
                         let studentName = String(r.studentName).replace(/"/g, '""');
                         let courses = String(r.courses || 'None').replace(/"/g, '""');
-                        let amount = currentAmount;
-                        let method = String(currentMethod).replace(/"/g, '""');
-                        
-                        let formattedDate = "";
-                        try {
-                            formattedDate = currentDate ? new Date(currentDate).toLocaleDateString('en-GB') : '';
-                        } catch(err) {
-                            formattedDate = currentDate;
-                        }
-                        let receiptNo = String(currentReceiptNo).replace(/"/g, '""');
+                        let methodsStr = String(paymentMethods.join(" + ")).replace(/"/g, '""');
+                        let datesStr = String(paymentDates.join(" , ")).replace(/"/g, '""');
+                        let receiptsStr = String(receiptNos.join(" , ")).replace(/"/g, '""');
+                        let discDetailsStr = String(discountDetails.join(" | ")).replace(/"/g, '""');
 
-                        csvContent += `"${studentId}","${studentName}","${courses}",${amount},"${method}","${formattedDate}","${receiptNo}"\n`;
-                    });
+                        csvContent += `"${studentId}","${studentName}","${courses}",${totalPaid},${totalDiscount},"${discDetailsStr}","${methodsStr}","${datesStr}","${receiptsStr}"\n`;
+                    }
                 }
             });
 
@@ -275,7 +330,6 @@
                 return;
             }
 
-            // إنشاء ملف التحميل وتنزيله للمركز المالي فورا بصيغة CSV المتوافقة بالكامل مع Excel
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
@@ -326,7 +380,9 @@
                 
                 if(out.success) {
                     alert(out.message);
-                    executeDirectPrint(out.receiptNo, stuName, stuId, faculty, payAmt, payDate, payMethod);
+                    if(payAmt > 0) {
+                        executeDirectPrint(out.receiptNo, stuName, stuId, faculty, payAmt, payDate, payMethod);
+                    }
                     pullLedger();
                 } else {
                     alert(out.message);
@@ -343,11 +399,9 @@
         function executeDirectPrint(receiptNo, name, id, faculty, amount, date, method) {
             const reasonText = document.getElementById('receiptReasonText').value;
             
-            // تاريخ السداد الفعلي (الذي تم اختياره وقت الدفع)
             const paymentDateObj = new Date(date);
             const actualPaymentDate = paymentDateObj.toLocaleDateString('en-GB');
             
-            // تاريخ ووقت طباعة الإيصال الفعلي (لحظة استخراج الورقة من السيستم)
             const currentPrintObj = new Date();
             const printDate = currentPrintObj.toLocaleDateString('en-GB');
             const printTime = currentPrintObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -459,23 +513,16 @@
             }, 300);
         }
 
-        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
-        window.onload = pullLedger;
-        
-        // دالة البحث المباشر في جدول الحسابات
         function filterStudentTable() {
             const input = document.getElementById("searchStudentInput");
             const filter = input.value.toUpperCase();
             const tbody = document.querySelector("#ledgerTable tbody");
             const rows = tbody.getElementsByTagName("tr");
 
-            // المرور على كل صفوف الجدول وإخفاء الصف الذي لا يتطابق مع البحث
             for (let i = 0; i < rows.length; i++) {
-                // الخلية الأولى (رقم 0) هي التي تحتوي على اسم الطالب والـ ID
                 const studentInfoCell = rows[i].getElementsByTagName("td")[0];
                 if (studentInfoCell) {
                     const txtValue = studentInfoCell.textContent || studentInfoCell.innerText;
-                    // إذا كان النص موجوداً نعرض الصف، وإلا نخفيه
                     if (txtValue.toUpperCase().indexOf(filter) > -1) {
                         rows[i].style.display = "";
                     } else {
@@ -484,6 +531,9 @@
                 }
             }
         }
+
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+        window.onload = pullLedger;
         
     </script>
 </body>
