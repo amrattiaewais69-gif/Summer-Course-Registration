@@ -66,8 +66,16 @@
                     const canPerformAction = isSubmitted || isApproved;
 
                     tr.innerHTML = `
-                        <td><strong>${r.studentName}</strong><br><small style="color:#64748b;">ID: ${r.studentId} | Level: ${r.level}</small></td>
-                        <td><div style="max-width:400px; word-wrap:break-word; font-size:13px; color:#334155;">${r.courses}</div></td>
+                        <td>
+                            <strong>${r.studentName}</strong><br>
+                            <small style="color:#64748b;">ID: ${r.studentId} | Level: ${r.level}</small><br>
+                            <small style="color:#be123c; font-weight:600; display:block; margin-top:4px;">Failed Courses: ${r.failedCourses || 'None'}</small>
+                        </td>
+                        <td>
+                            <div style="max-width:400px; word-wrap:break-word; font-size:13px; color:#334155;">
+                                <strong style="color:#4E4099;">Selected Courses:</strong><br>${r.courses}
+                            </div>
+                        </td>
                         <td><span class="badge">${r.totalCredits} CH</span></td>
                         <td><span style="font-weight:700; color:var(--primary-color);">${r.status}</span></td>
                         <td>
@@ -75,10 +83,10 @@
                                 <input type="text" id="note-${r.requestId}" placeholder="Provide decision rationale..." style="margin-bottom:8px; padding:8px; font-size:13px; width:100%;">
                                 <div style="display:flex; gap:5px; flex-wrap:wrap;">
                                     ${isSubmitted ? `
-                                        <button class="btn btn-success" style="padding:5px 10px; font-size:12px;" onclick="executeReview('${r.requestId}', 'Approve')">Approve</button>
-                                        <button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="executeReview('${r.requestId}', 'Reject')">Reject</button>
+                                        <button class="btn btn-success" style="padding:5px 10px; font-size:12px;" onclick="executeReview('${r.requestId}', 'Approve')">موافقة (Approve)</button>
+                                        <button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="executeReview('${r.requestId}', 'Reject')">رفض (Reject)</button>
                                     ` : ''}
-                                    <button class="btn btn-warning" style="padding:5px 10px; font-size:12px;" onclick="executeReview('${r.requestId}', 'Return')">Return for Modification</button>
+                                    <button class="btn btn-warning" style="background-color: #fd7e14; border-color: #fd7e14; color: white; padding:5px 10px; font-size:12px;" onclick="executeReview('${r.requestId}', 'Return')">إرجاع للطالب للتعديل (Return for Modification)</button>
                                 </div>
                             ` : `<span style="color:#94a3b8; font-size:13px; font-weight:500;">Evaluation Completed</span>`}
                         </td>
