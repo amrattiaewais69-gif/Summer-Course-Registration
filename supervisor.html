@@ -66,7 +66,7 @@
                     const canPerformAction = isSubmitted || isApproved;
 
                     tr.innerHTML = `
-                        <td><strong>${r.studentName}</strong><br><small style="color:#64748b;">ID: ${r.studentId} | Level: ${r.level}</small></td>
+                        <td><strong>${r.studentName}</strong><br><small style="color:#64748b;">ID: ${r.studentId} | Level: ${r.level}<br>Email: ${r.studentEmail || 'N/A'}</small></td>
                         <td>
                             <div style="max-width:400px; word-wrap:break-word; font-size:13px; color:#334155;">
                                 <strong style="color:#4E4099;">Selected Courses:</strong><br>${r.courses}
